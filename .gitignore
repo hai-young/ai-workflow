@@ -1,0 +1,43 @@
+# Dependencies
+node_modules/
+
+# Build output
+target/
+build/
+dist/
+
+# IDE
+.idea/
+.vscode/
+*.iws
+*.iml
+*.ipr
+.settings/
+.classpath
+.project
+.factorypath
+.springBeans
+.sts4-cache
+.apt_generated/
+
+# Environment
+.env.local
+.env.*.local
+
+# OS
+.DS_Store
+Thumbs.db
+
+# Logs
+*.log
+
+# Runtime
+.omc/
+
+# Maven
+.mvn/wrapper/maven-wrapper.jar
+
+# Misc
+*.swp
+*.swo
+*~

@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>测试按钮存在性</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+        }
+        .test-section {
+            margin: 20px 0;
+            padding: 15px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+        }
+        .pass { border-color: green; background-color: #f0fff0; }
+        .fail { border-color: red; background-color: #fff5f5; }
+        button {
+            padding: 10px 20px;
+            margin: 10px 0;
+        }
+    </style>
+</head>
+<body>
+    <h1>按钮存在性测试</h1>
+
+    <div id="results"></div>
+
+    <script>
+        async function testButton() {
+            const results = document.getElementById('results');
+            results.innerHTML = '<h2>测试中...</h2>';
+
+            try {
+                // Test 1: Check if server is accessible
+                console.log('Test 1: Fetching login page...');
+                const response = await fetch('http://localhost:3001/login');
+                console.log('Response status:', response.status);
+
+                if (response.ok) {
+                    const html = await response.text();
+                    console.log('Page loaded, length:', html.length);
+
+                    // Test 2: Check if button exists in HTML
+                    console.log('Test 2: Checking for "立即注册" button...');
+                    const hasButton = html.includes('立即注册') && html.includes('register-link-text');
+                    console.log('Button found in HTML:', hasButton);
+
+                    // Test 3: Try to simulate click
+                    console.log('Test 3: Checking router module...');
+                    const module = await import('vue-router');
+                    console.log('Vue Router module:', module);
+
+                    let resultHTML = `
+                        <div class="test-section pass">
+                            <h3>✓ 服务器可访问</h3>
+                            <p>状态码: ${response.status}</p>
+                            <p>页面长度: ${html.length} 字符</p>
+                        </div>
+                        <div class="test-section ${hasButton ? 'pass' : 'fail'}">
+                            <h3>${hasButton ? '✓' : '✗'} 按钮存在于HTML中</h3>
+                            <p>包含"立即注册": ${html.includes('立即注册')}</p>
+                            <p>包含"register-link-text": ${html.includes('register-link-text')}</p>
+                        </div>
+                        <div class="test-section pass">
+                            <h3>✓ Vue Router 可用</h3>
+                            <p>模块已加载</p>
+                        </div>
+                        <div class="test-section">
+                            <h3>请在浏览器中打开</h3>
+                            <p>http://localhost:3001/login</p>
+                            <p>按 F12 打开控制台，点击按钮</p>
+                        </div>
+                    `;
+                    results.innerHTML = resultHTML;
+                } else {
+                    throw new Error(`Server returned ${response.status}`);
+                }
+            } catch (error) {
+                console.error('Test error:', error);
+                results.innerHTML = `
+                    <div class="test-section fail">
+                        <h3>✗ 测试失败</h3>
+                        <p>${error.message}</p>
+                        <p>请确保前端服务器正在运行在 http://localhost:3001</p>
+                    </div>
+                `;
+            }
+        }
+
+        testButton();
+    </script>
+</body>
+</html>
