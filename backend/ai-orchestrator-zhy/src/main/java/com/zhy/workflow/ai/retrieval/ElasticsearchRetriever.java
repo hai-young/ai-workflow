@@ -89,7 +89,7 @@ public class ElasticsearchRetriever {
                             "content", content,
                             "file_name", fileName,
                             "file_type", fileType,
-                            "upload_time", java.time.LocalDateTime.now().toString()
+                            "upload_time", java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS"))
                     )));
         } catch (Exception e) {
             log.warn("ES 索引写入失败 (docId={}, chunkId={}): {}", docId, chunkId, e.getMessage());
@@ -126,8 +126,7 @@ public class ElasticsearchRetriever {
                                         .analyzer("ik_smart_analyzer")))
                                 .properties("file_type", p -> p.keyword(k -> k))
                                 .properties("file_name", p -> p.keyword(k -> k))
-                                .properties("upload_time", p -> p.date(d -> d
-                                        .format("yyyy-MM-dd HH:mm:ss||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS||epoch_millis")))
+                                .properties("upload_time", p -> p.date(d -> d.format("yyyy-MM-dd'T'HH:mm:ss.SSS")))
                                 .properties("milvus_id", p -> p.keyword(k -> k))
                                 .properties("metadata_str", p -> p.text(t -> t.index(false))))
                 ));

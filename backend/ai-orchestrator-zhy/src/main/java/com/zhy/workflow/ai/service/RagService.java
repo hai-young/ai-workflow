@@ -114,7 +114,7 @@ public class RagService {
             chunk.getMetadata().put("chunk_id", chunkId);
             chunk.getMetadata().put("chunk_index", i);
             chunk.getMetadata().put("file_name", fileName);
-            chunk.getMetadata().put("upload_time", java.time.LocalDateTime.now().toString());
+            chunk.getMetadata().put("upload_time", java.time.LocalDateTime.now().format(java.time.format.DateTimeFormatter.ofPattern("yyyy-MM-dd'T'HH:mm:ss.SSS")));
 
             try {
                 esRetriever.indexDocument(docId, chunkId, chunk.getText(), fileName, fileType, fileName);
