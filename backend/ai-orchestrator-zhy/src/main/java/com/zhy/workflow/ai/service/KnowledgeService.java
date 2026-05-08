@@ -222,6 +222,15 @@ public class KnowledgeService {
                 .map(this::buildDocEntryFromRecord)
                 .collect(Collectors.toList());
 
+        // 关键词搜索：MySQL 按文件名模糊匹配
+        if (hasFilter(keyword)) {
+            docs = docs.stream()
+                    .filter(d -> {
+                        String fn = (String) d.get("fileName");
+                        return fn != null && fn.toLowerCase().contains(keyword.trim().toLowerCase());
+                    })
+                    .collect(Collectors.toList());
+        }
         // 按 indexStatus 过滤
         if (hasFilter(indexStatus)) {
             docs = docs.stream()
