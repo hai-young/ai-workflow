@@ -14,6 +14,7 @@ import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.*;
 
@@ -65,6 +66,7 @@ public class DocumentLifecycleService {
      * 级联删除文档：ES → Milvus → MinIO → MySQL。
      * 每步失败记录日志但不中断后续步骤。
      */
+    @Transactional
     public Map<String, Object> deleteByDocId(String docId) {
         Map<String, Object> result = new LinkedHashMap<>();
         result.put("success", true);
