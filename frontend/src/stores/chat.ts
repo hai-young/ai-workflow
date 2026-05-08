@@ -93,10 +93,10 @@ export const useChatStore = defineStore('chat', () => {
       target.isStreaming = false
       target.citations = citations
       target.safetyStatus = 'pass'
-      // 持久化思考步骤到消息
+      // 持久化思考步骤到消息（深拷贝避免后续轮次污染）
       if (activeThinking.value) {
         target.thinking = {
-          steps: activeThinking.value.steps,
+          steps: activeThinking.value.steps.map(s => ({ ...s })),
           currentStage: null,
         }
       }
