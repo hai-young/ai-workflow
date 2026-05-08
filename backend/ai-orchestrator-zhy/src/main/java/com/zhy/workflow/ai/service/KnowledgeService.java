@@ -507,7 +507,7 @@ public class KnowledgeService {
     }
 
     /**
-     * 重建 ES 索引：从 Milvus 读取 chunk（含全文内容），写入 ES。
+     * 重建 ES 索引：一次拉取 Milvus 全部 chunk，按 docId 分组后写入 ES。
      */
     private void reindexToEs(String taskId, List<String> docIdList) {
         int total = docIdList.size();
@@ -522,17 +522,31 @@ public class KnowledgeService {
             log.warn("更新 ES 重索引进度失败: {}", e.getMessage());
         }
 
+        // 一次拉取 Milvus 全部 chunk，避免 filterExpression 兼容问题
+        Set<String> targetSet = new HashSet<>(docIdList);
+        Map<String, List<Document>> chunksByDoc = new HashMap<>();
+        try {
+            List<Document> allChunks = vectorStore.similaritySearch(
+                    SearchRequest.builder()
+                            .query("dummy")
+                            .topK(10000)
+                            .similarityThreshold(0.0)
+                            .build());
+            for (Document doc : allChunks) {
+                String did = (String) doc.getMetadata().getOrDefault("doc_id", "");
+                if (!did.isEmpty() && targetSet.contains(did)) {
+                    chunksByDoc.computeIfAbsent(did, k -> new ArrayList<>()).add(doc);
+                }
+            }
+        } catch (Exception e) {
+            log.error("重索引 ES - 无法从 Milvus 读取 chunk: {}", e.getMessage());
+            updateReindexStatus(taskId, "failed", "Milvus 读取失败: " + e.getMessage());
+            return;
+        }
+
         for (String docId : docIdList) {
             try {
-                // 从 Milvus 读取该文档所有 chunk（使用 metadata 过滤 + 高 topK）
-                List<Document> chunks = vectorStore.similaritySearch(
-                        SearchRequest.builder()
-                                .query("dummy")
-                                .topK(10000)
-                                .similarityThreshold(0.0)
-                                .filterExpression("metadata[\"doc_id\"] == \"" + docId + "\"")
-                                .build());
-
+                List<Document> chunks = chunksByDoc.getOrDefault(docId, Collections.emptyList());
                 if (chunks.isEmpty()) {
                     log.warn("重索引 ES - 文档 {} 在 Milvus 中无数据，跳过", docId);
                     processed++;
@@ -551,11 +565,10 @@ public class KnowledgeService {
                     esRetriever.indexDocument(docId, chunkId, content, fileName, fileType, title);
                 }
 
-                // 更新 MySQL 状态
                 documentLifecycleService.updateStatus(docId, "indexed", null);
-
                 processed++;
                 updateEsProgress(taskId, processed, total);
+                log.info("重索引 ES 进度: {}/{} docId={}", processed, total, docId);
             } catch (Exception e) {
                 log.warn("重索引 ES - 文档 {} 失败: {}", docId, e.getMessage());
                 logError("reindex-es-doc-failed", "docId=" + docId + ", error=" + e.getMessage());
