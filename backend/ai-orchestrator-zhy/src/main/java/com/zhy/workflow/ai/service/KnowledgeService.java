@@ -70,20 +70,16 @@ public class KnowledgeService {
         boolean milvusAvailable = false;
         String milvusError = null;
         try {
-            List<Document> docs = vectorStore.similaritySearch(
-                    SearchRequest.builder()
-                            .query("a")
-                            .topK(1)
-                            .similarityThreshold(0.0)
-                            .build());
             milvusAvailable = true;
             milvusDocCount = estimateMilvusCount();
         } catch (Exception e) {
             milvusError = e.getMessage();
             log.warn("Milvus 状态检查失败: {}", milvusError);
         }
-        milvusStatus.put("available", milvusAvailable);
+        milvusStatus.put("name", "Milvus");
         milvusStatus.put("docCount", milvusDocCount);
+        milvusStatus.put("collection", "workflow_vector_store");
+        milvusStatus.put("status", milvusAvailable ? "healthy" : "offline");
         if (milvusError != null) {
             milvusStatus.put("error", milvusError);
         }
@@ -91,18 +87,23 @@ public class KnowledgeService {
         // ── Elasticsearch 状态 ──
         Map<String, Object> esStatus = new LinkedHashMap<>();
         long esDocCount = 0;
+        long esChunkCount = 0;
         boolean esAvailable = false;
         String esError = null;
         try {
             esRetriever.ensureIndex();
-            esDocCount = esClient.count(c -> c.index(INDEX_NAME)).count();
+            esChunkCount = esClient.count(c -> c.index(INDEX_NAME)).count();
+            // 按 doc_id 去重统计文档数
+            esDocCount = collectEsDocIds().size();
             esAvailable = true;
         } catch (Exception e) {
             esError = e.getMessage();
             log.warn("Elasticsearch 状态检查失败: {}", esError);
         }
-        esStatus.put("available", esAvailable);
+        esStatus.put("name", "Elasticsearch");
         esStatus.put("docCount", esDocCount);
+        esStatus.put("storeSize", esChunkCount + " chunks");
+        esStatus.put("status", esAvailable ? "healthy" : "offline");
         if (esError != null) {
             esStatus.put("error", esError);
         }

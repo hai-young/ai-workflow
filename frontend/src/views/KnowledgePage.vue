@@ -188,8 +188,21 @@ function handleRefresh() {
   store.fetchDocuments({ page: currentPage.value, pageSize: pageSize.value })
 }
 
-function handleConsistencyCheck() {
-  store.checkConsistencyCheck()
+const checking = ref(false)
+async function handleConsistencyCheck() {
+  checking.value = true
+  try {
+    const res = await store.checkConsistencyCheck()
+    if (res?.success) {
+      message.success('一致性检查完成')
+    } else {
+      message.error('一致性检查失败')
+    }
+  } catch {
+    message.error('一致性检查失败')
+  } finally {
+    checking.value = false
+  }
 }
 
 function openErrorLogDrawer() {
@@ -255,7 +268,7 @@ const tableData = computed(() =>
               <span class="stat-value">{{ store.indexStatus.elasticsearch?.docCount ?? '--' }}</span>
             </div>
             <div class="card-stat">
-              <span class="stat-label">存储</span>
+              <span class="stat-label">Chunk 数</span>
               <span class="stat-value">{{ store.indexStatus.elasticsearch?.storeSize ?? '--' }}</span>
             </div>
           </div>
@@ -288,7 +301,7 @@ const tableData = computed(() =>
             </div>
           </div>
           <div class="card-actions">
-            <button class="card-btn" @click="handleConsistencyCheck">检查</button>
+            <button class="card-btn" @click="handleConsistencyCheck" :disabled="checking">{{ checking ? '检查中...' : '检查' }}</button>
             <button class="card-btn warn" @click="openReindexModal('all')">重建</button>
           </div>
         </div>
