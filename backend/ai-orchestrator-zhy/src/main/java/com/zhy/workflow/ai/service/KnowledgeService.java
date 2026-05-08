@@ -5,7 +5,6 @@ import co.elastic.clients.elasticsearch._types.SortOrder;
 import co.elastic.clients.elasticsearch._types.aggregations.*;
 import co.elastic.clients.elasticsearch.core.SearchResponse;
 import co.elastic.clients.elasticsearch.core.search.Hit;
-import co.elastic.clients.json.JsonData;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
@@ -221,51 +220,6 @@ public class KnowledgeService {
         result.put("pageSize", pageSize);
         result.put("totalPages", Math.max(1, (int) Math.ceil((double) total / pageSize)));
         return result;
-    }
-
-    private Map<String, Object> extractTopHitSource(StringTermsBucket bucket) {
-        try {
-            TopHitsAggregate topHits = bucket.aggregations().get("latest").topHits();
-            List<Hit<JsonData>> hitsData = topHits.hits().hits();
-            if (!hitsData.isEmpty() && hitsData.get(0).source() != null) {
-                @SuppressWarnings("unchecked")
-                Map<String, Object> source = hitsData.get(0).source().to(Map.class);
-                return source;
-            }
-        } catch (Exception e) {
-            log.debug("提取聚合 top hit 失败, bucket={}: {}", bucket.key(), e.getMessage());
-        }
-        return Collections.emptyMap();
-    }
-
-    private Map<String, Object> buildDocumentEntry(String docId, long chunkCount, Map<String, Object> source) {
-        Map<String, Object> doc = new LinkedHashMap<>();
-        String fileName = safeString(source.get("file_name"), "未知");
-        String fileType = safeString(source.get("file_type"), "");
-        String uploadTime = safeString(source.get("upload_time"), "");
-
-        doc.put("id", docId);
-        doc.put("docId", docId);
-        doc.put("fileName", fileName);
-        doc.put("fileType", fileType);
-        doc.put("fileSize", source.getOrDefault("file_size", 0));
-        doc.put("uploadTime", uploadTime);
-        doc.put("chunkCount", chunkCount);
-
-        // 三态状态标记
-        boolean esAvail = esRetriever.isAvailable();
-        boolean milvusAvail = isMilvusAvailable();
-        doc.put("esStatus", esAvail ? "indexed" : "pending");
-        doc.put("milvusStatus", milvusAvail ? "indexed" : "pending");
-
-        if (esAvail && milvusAvail) {
-            doc.put("indexStatus", "completed");
-        } else if (!esAvail && !milvusAvail) {
-            doc.put("indexStatus", "pending");
-        } else {
-            doc.put("indexStatus", "partial");
-        }
-        return doc;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -745,23 +699,7 @@ public class KnowledgeService {
     // 辅助方法
     // ═══════════════════════════════════════════════════════════
 
-    private boolean isMilvusAvailable() {
-        try {
-            vectorStore.similaritySearch(
-                    SearchRequest.builder().query("a").topK(1).similarityThreshold(0.0).build());
-            return true;
-        } catch (Exception e) {
-            return false;
-        }
-    }
-
     private boolean hasFilter(String value) {
         return value != null && !value.trim().isEmpty();
-    }
-
-    private String safeString(Object value, String defaultVal) {
-        if (value == null) return defaultVal;
-        String s = value.toString();
-        return s.isEmpty() ? defaultVal : s;
     }
 }
