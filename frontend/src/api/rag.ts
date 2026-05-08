@@ -35,9 +35,8 @@ export function askSync(question: string, sessionId: string) {
 export function uploadDocument(file: File) {
   const fd = new FormData()
   fd.append('file', file)
-  return request.post<any, { success: boolean; message: string }>('/rag/upload', fd, {
-    headers: { 'Content-Type': 'multipart/form-data' },
-  })
+  // 不手动设置 Content-Type，让 axios 自动添加带 boundary 的 multipart/form-data
+  return request.post<any, { success: boolean; message: string }>('/rag/upload', fd)
 }
 
 // ── 知识库管理 ──
