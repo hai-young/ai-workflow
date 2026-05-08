@@ -154,67 +154,12 @@ public class KnowledgeService {
     // ═══════════════════════════════════════════════════════════
 
     /**
-     * 查询文档列表，MySQL 为主数据源、ES 为补充（关键词搜索时优先 ES）。
+     * 查询文档列表，MySQL 为主数据源。
      */
     public Map<String, Object> getDocuments(int page, int pageSize, String keyword, String fileType, String indexStatus) {
         Map<String, Object> result = new LinkedHashMap<>();
 
-        // 有关键词搜索时走 ES 全文检索
-        if (hasFilter(keyword) && esRetriever.isAvailable()) {
-            try {
-                esRetriever.ensureIndex();
-                SearchResponse<Map> response = esClient.search(s -> {
-                    s.index(INDEX_NAME).size(0);
-                    s.query(q -> q.multiMatch(mm -> mm
-                            .query(keyword.trim())
-                            .fields("title", "content")));
-                    if (hasFilter(fileType)) {
-                        s.query(q -> q.bool(b -> b
-                                .must(m -> m.multiMatch(mt -> mt.query(keyword.trim()).fields("title", "content")))
-                                .filter(f -> f.term(t -> t.field("file_type").value(fileType.trim())))));
-                    }
-                    s.aggregations("by_doc_id", a -> a
-                            .terms(t -> t.field("doc_id").size(10000))
-                            .aggregations("latest", sa -> sa
-                                    .topHits(th -> th.size(1)
-                                            .sort(srt -> srt.field(f -> f.field("upload_time").order(SortOrder.Desc)))
-                                            .source(sf -> sf.filter(f -> f.includes(
-                                                    List.of("doc_id", "chunk_id", "title", "content",
-                                                            "file_name", "file_type", "upload_time")))))));
-                    return s;
-                }, Map.class);
-
-                StringTermsAggregate termsAgg = response.aggregations().get("by_doc_id").sterms();
-                List<StringTermsBucket> buckets = termsAgg.buckets().array();
-
-                List<String> esDocIds = buckets.stream()
-                        .map(b -> b.key().toString())
-                        .collect(Collectors.toList());
-
-                // 用 ES 的 docIds 从 MySQL 补全元数据
-                List<Map<String, Object>> docs = esDocIds.stream()
-                        .map(docId -> {
-                            var record = documentLifecycleService.getByDocId(docId);
-                            if (record.isPresent()) {
-                                return buildDocEntryFromRecord(record.get());
-                            }
-                            // MySQL 中没有记录，从 ES 聚合构造
-                            var bucket = buckets.stream()
-                                    .filter(b -> b.key().toString().equals(docId))
-                                    .findFirst().orElse(null);
-                            return buildDocumentEntry(docId,
-                                    bucket != null ? bucket.docCount() : 0,
-                                    bucket != null ? extractTopHitSource(bucket) : Collections.emptyMap());
-                        })
-                        .collect(Collectors.toList());
-
-                return paginateDocs(docs, page, pageSize, result);
-            } catch (Exception e) {
-                log.warn("ES 关键词搜索失败，降级到 MySQL: {}", e.getMessage());
-            }
-        }
-
-        // ── 主路径：MySQL 分页查询（关键词在数据库层 LIKE 过滤）──
+        // MySQL 分页查询（关键词走数据库层 LIKE）
         org.springframework.data.domain.Page<com.zhy.workflow.ai.entity.DocumentRecord> mysqlPage =
                 documentLifecycleService.listDocuments(page, pageSize, keyword);
 
@@ -222,16 +167,16 @@ public class KnowledgeService {
                 .map(this::buildDocEntryFromRecord)
                 .collect(Collectors.toList());
 
-        // 按 indexStatus 过滤
+        // fileType 过滤
+        if (hasFilter(fileType)) {
+            docs = docs.stream()
+                    .filter(d -> fileType.trim().equalsIgnoreCase((String) d.get("fileType")))
+                    .collect(Collectors.toList());
+        }
+        // indexStatus 过滤
         if (hasFilter(indexStatus)) {
             docs = docs.stream()
                     .filter(d -> indexStatus.trim().equalsIgnoreCase((String) d.get("indexStatus")))
-                    .collect(Collectors.toList());
-        }
-        // 按 fileType 过滤
-        if (hasFilter(fileType) && !hasFilter(keyword)) {
-            docs = docs.stream()
-                    .filter(d -> fileType.trim().equalsIgnoreCase((String) d.get("fileType")))
                     .collect(Collectors.toList());
         }
 
