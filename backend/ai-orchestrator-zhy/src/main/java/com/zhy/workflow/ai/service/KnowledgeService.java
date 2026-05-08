@@ -506,6 +506,9 @@ public class KnowledgeService {
         }
     }
 
+    /**
+     * 重建 ES 索引：从 Milvus 读取 chunk（含全文内容），写入 ES。
+     */
     private void reindexToEs(String taskId, List<String> docIdList) {
         int total = docIdList.size();
         int processed = 0;
@@ -521,26 +524,36 @@ public class KnowledgeService {
 
         for (String docId : docIdList) {
             try {
+                // 从 Milvus 读取该文档所有 chunk（使用 metadata 过滤 + 高 topK）
+                List<Document> chunks = vectorStore.similaritySearch(
+                        SearchRequest.builder()
+                                .query("dummy")
+                                .topK(10000)
+                                .similarityThreshold(0.0)
+                                .filterExpression("metadata[\"doc_id\"] == \"" + docId + "\"")
+                                .build());
+
+                if (chunks.isEmpty()) {
+                    log.warn("重索引 ES - 文档 {} 在 Milvus 中无数据，跳过", docId);
+                    processed++;
+                    updateEsProgress(taskId, processed, total);
+                    continue;
+                }
+
                 esRetriever.ensureIndex();
-                // 获取该文档的所有 chunks
-                SearchResponse<Map> response = esClient.search(s -> s
-                                .index(INDEX_NAME)
-                                .query(q -> q.term(t -> t.field("doc_id").value(docId)))
-                                .size(1000),
-                        Map.class);
-
-                for (Hit<Map> hit : response.hits().hits()) {
-                    Map<String, Object> source = hit.source();
-                    if (source == null) continue;
-
-                    String chunkId = (String) source.getOrDefault("chunk_id", hit.id());
-                    String content = (String) source.getOrDefault("content", "");
-                    String fileName = (String) source.getOrDefault("file_name", "");
-                    String fileType = (String) source.getOrDefault("file_type", "");
-                    String title = (String) source.getOrDefault("title", fileName);
+                for (Document doc : chunks) {
+                    String chunkId = (String) doc.getMetadata().getOrDefault("chunk_id", doc.getId());
+                    String content = doc.getText();
+                    String fileName = (String) doc.getMetadata().getOrDefault("file_name", "");
+                    String fileType = (String) doc.getMetadata().getOrDefault("file_type", "");
+                    String title = (String) doc.getMetadata().getOrDefault("title", fileName);
 
                     esRetriever.indexDocument(docId, chunkId, content, fileName, fileType, title);
                 }
+
+                // 更新 MySQL 状态
+                documentLifecycleService.updateStatus(docId, "indexed", null);
+
                 processed++;
                 updateEsProgress(taskId, processed, total);
             } catch (Exception e) {
@@ -550,6 +563,9 @@ public class KnowledgeService {
         }
     }
 
+    /**
+     * 重建 Milvus 索引：从 ES 读取 chunk（含全文内容），重新 embedding 写入 Milvus。
+     */
     private void reindexToMilvus(String taskId, List<String> docIdList) {
         int total = docIdList.size();
         int processed = 0;
@@ -566,10 +582,11 @@ public class KnowledgeService {
         for (String docId : docIdList) {
             try {
                 esRetriever.ensureIndex();
+                // 从 ES 读取该文档所有 chunk
                 SearchResponse<Map> response = esClient.search(s -> s
                                 .index(INDEX_NAME)
                                 .query(q -> q.term(t -> t.field("doc_id").value(docId)))
-                                .size(1000),
+                                .size(10000),
                         Map.class);
 
                 List<Document> chunks = new ArrayList<>();
@@ -578,6 +595,8 @@ public class KnowledgeService {
                     if (source == null) continue;
 
                     String content = (String) source.getOrDefault("content", "");
+                    if (content == null || content.isEmpty()) continue;
+
                     Document doc = new Document(content);
                     doc.getMetadata().put("doc_id", docId);
                     doc.getMetadata().put("chunk_id", source.getOrDefault("chunk_id", hit.id()));
@@ -592,6 +611,10 @@ public class KnowledgeService {
                 if (!chunks.isEmpty()) {
                     vectorStore.add(chunks);
                 }
+
+                // 更新 MySQL 状态
+                documentLifecycleService.updateStatus(docId, null, "indexed");
+
                 processed++;
                 updateMilvusProgress(taskId, processed, total);
             } catch (Exception e) {
