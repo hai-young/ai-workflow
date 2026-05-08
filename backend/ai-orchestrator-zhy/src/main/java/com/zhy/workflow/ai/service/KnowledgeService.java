@@ -40,15 +40,18 @@ public class KnowledgeService {
     private final ElasticsearchRetriever esRetriever;
     private final VectorStore vectorStore;
     private final StringRedisTemplate redis;
+    private final DocumentLifecycleService documentLifecycleService;
 
     public KnowledgeService(ElasticsearchClient esClient,
                             ElasticsearchRetriever esRetriever,
                             VectorStore vectorStore,
-                            StringRedisTemplate redis) {
+                            StringRedisTemplate redis,
+                            DocumentLifecycleService documentLifecycleService) {
         this.esClient = esClient;
         this.esRetriever = esRetriever;
         this.vectorStore = vectorStore;
         this.redis = redis;
+        this.documentLifecycleService = documentLifecycleService;
     }
 
     // ═══════════════════════════════════════════════════════════
@@ -91,12 +94,11 @@ public class KnowledgeService {
         boolean esAvailable = false;
         String esError = null;
         try {
+            esRetriever.ensureIndex();
             esDocCount = esClient.count(c -> c.index(INDEX_NAME)).count();
             esAvailable = true;
-            esRetriever.setAvailable(true);
         } catch (Exception e) {
             esError = e.getMessage();
-            esRetriever.setAvailable(false);
             log.warn("Elasticsearch 状态检查失败: {}", esError);
         }
         esStatus.put("available", esAvailable);
@@ -151,97 +153,127 @@ public class KnowledgeService {
     // ═══════════════════════════════════════════════════════════
 
     /**
-     * 查询 ES 中的文档列表（按 doc_id 聚合去重），支持分页和关键词/文件类型筛选。
+     * 查询文档列表，MySQL 为主数据源、ES 为补充（关键词搜索时优先 ES）。
      */
     public Map<String, Object> getDocuments(int page, int pageSize, String keyword, String fileType, String indexStatus) {
         Map<String, Object> result = new LinkedHashMap<>();
 
-        try {
-            esRetriever.ensureIndex();
-            SearchResponse<Map> response = esClient.search(s -> {
-                s.index(INDEX_NAME);
-                s.size(0); // 仅聚合
+        // 有关键词搜索时走 ES 全文检索
+        if (hasFilter(keyword) && esRetriever.isAvailable()) {
+            try {
+                esRetriever.ensureIndex();
+                SearchResponse<Map> response = esClient.search(s -> {
+                    s.index(INDEX_NAME).size(0);
+                    s.query(q -> q.multiMatch(mm -> mm
+                            .query(keyword.trim())
+                            .fields("title", "content")));
+                    if (hasFilter(fileType)) {
+                        s.query(q -> q.bool(b -> b
+                                .must(m -> m.multiMatch(mt -> mt.query(keyword.trim()).fields("title", "content")))
+                                .filter(f -> f.term(t -> t.field("file_type").value(fileType.trim())))));
+                    }
+                    s.aggregations("by_doc_id", a -> a
+                            .terms(t -> t.field("doc_id").size(10000))
+                            .aggregations("latest", sa -> sa
+                                    .topHits(th -> th.size(1)
+                                            .sort(srt -> srt.field(f -> f.field("upload_time").order(SortOrder.Desc)))
+                                            .source(sf -> sf.filter(f -> f.includes(
+                                                    List.of("doc_id", "chunk_id", "title", "content",
+                                                            "file_name", "file_type", "upload_time")))))));
+                    return s;
+                }, Map.class);
 
-                // 构建查询条件
-                if (hasFilter(keyword) || hasFilter(fileType)) {
-                    s.query(q -> q.bool(b -> {
-                        if (hasFilter(keyword)) {
-                            b.must(m -> m.multiMatch(mm -> mm
-                                    .query(keyword.trim())
-                                    .fields("title", "content")));
-                        }
-                        if (hasFilter(fileType)) {
-                            b.filter(f -> f.term(t -> t.field("file_type").value(fileType.trim())));
-                        }
-                        return b;
-                    }));
-                }
+                StringTermsAggregate termsAgg = response.aggregations().get("by_doc_id").sterms();
+                List<StringTermsBucket> buckets = termsAgg.buckets().array();
 
-                // 按 doc_id 分组，每组取最新一条作为文档代表
-                s.aggregations("by_doc_id", a -> a
-                        .terms(t -> t.field("doc_id").size(10000))
-                        .aggregations("latest", sa -> sa
-                                .topHits(th -> th
-                                        .size(1)
-                                        .sort(srt -> srt.field(f -> f.field("upload_time").order(SortOrder.Desc)))
-                                        .source(sf -> sf.filter(f -> f.includes(
-                                                List.of("doc_id", "chunk_id", "title", "content",
-                                                        "file_name", "file_type", "upload_time"))))
-                                ))
-                );
+                List<String> esDocIds = buckets.stream()
+                        .map(b -> b.key().toString())
+                        .collect(Collectors.toList());
 
-                return s;
-            }, Map.class);
+                // 用 ES 的 docIds 从 MySQL 补全元数据
+                List<Map<String, Object>> docs = esDocIds.stream()
+                        .map(docId -> {
+                            var record = documentLifecycleService.getByDocId(docId);
+                            if (record.isPresent()) {
+                                return buildDocEntryFromRecord(record.get());
+                            }
+                            // MySQL 中没有记录，从 ES 聚合构造
+                            var bucket = buckets.stream()
+                                    .filter(b -> b.key().toString().equals(docId))
+                                    .findFirst().orElse(null);
+                            return buildDocumentEntry(docId,
+                                    bucket != null ? bucket.docCount() : 0,
+                                    bucket != null ? extractTopHitSource(bucket) : Collections.emptyMap());
+                        })
+                        .collect(Collectors.toList());
 
-            // 解析聚合桶
-            StringTermsAggregate termsAgg = response.aggregations().get("by_doc_id").sterms();
-            List<StringTermsBucket> buckets = termsAgg.buckets().array();
-
-            int totalDocs = buckets.size();
-            int fromIndex = (page - 1) * pageSize;
-            int toIndex = Math.min(fromIndex + pageSize, totalDocs);
-
-            // 后置过滤 indexStatus（if specified）
-            List<Map<String, Object>> allDocs = new ArrayList<>();
-            for (StringTermsBucket bucket : buckets) {
-                String docId = bucket.key().toString();
-                long chunkCount = bucket.docCount();
-
-                Map<String, Object> source = extractTopHitSource(bucket);
-                Map<String, Object> doc = buildDocumentEntry(docId, chunkCount, source);
-
-                // 按 indexStatus 过滤
-                String computedStatus = (String) doc.get("indexStatus");
-                if (hasFilter(indexStatus) && !indexStatus.trim().equalsIgnoreCase(computedStatus)) {
-                    continue;
-                }
-                allDocs.add(doc);
+                return paginateDocs(docs, page, pageSize, result);
+            } catch (Exception e) {
+                log.warn("ES 关键词搜索失败，降级到 MySQL: {}", e.getMessage());
             }
-
-            int filteredTotal = allDocs.size();
-            fromIndex = Math.min((page - 1) * pageSize, filteredTotal);
-            toIndex = Math.min(fromIndex + pageSize, filteredTotal);
-            List<Map<String, Object>> pageDocs;
-            if (fromIndex < filteredTotal) {
-                pageDocs = allDocs.subList(fromIndex, toIndex);
-            } else {
-                pageDocs = Collections.emptyList();
-            }
-
-            result.put("documents", pageDocs);
-            result.put("total", filteredTotal);
-            result.put("page", page);
-            result.put("pageSize", pageSize);
-            result.put("totalPages", Math.max(1, (int) Math.ceil((double) filteredTotal / pageSize)));
-        } catch (Exception e) {
-            log.error("查询文档列表失败: {}", e.getMessage(), e);
-            result.put("documents", Collections.emptyList());
-            result.put("total", 0);
-            result.put("page", page);
-            result.put("pageSize", pageSize);
-            result.put("totalPages", 0);
-            result.put("error", "ES 查询失败: " + e.getMessage());
         }
+
+        // ── 主路径：MySQL 分页查询 ──
+        org.springframework.data.domain.Page<com.zhy.workflow.ai.entity.DocumentRecord> mysqlPage =
+                documentLifecycleService.listDocuments(page, pageSize);
+
+        List<Map<String, Object>> docs = mysqlPage.getContent().stream()
+                .map(this::buildDocEntryFromRecord)
+                .collect(Collectors.toList());
+
+        // 按 indexStatus 过滤
+        if (hasFilter(indexStatus)) {
+            docs = docs.stream()
+                    .filter(d -> indexStatus.trim().equalsIgnoreCase((String) d.get("indexStatus")))
+                    .collect(Collectors.toList());
+        }
+        // 按 fileType 过滤
+        if (hasFilter(fileType) && !hasFilter(keyword)) {
+            docs = docs.stream()
+                    .filter(d -> fileType.trim().equalsIgnoreCase((String) d.get("fileType")))
+                    .collect(Collectors.toList());
+        }
+
+        result.put("documents", docs);
+        result.put("total", (int) mysqlPage.getTotalElements());
+        result.put("page", page);
+        result.put("pageSize", pageSize);
+        result.put("totalPages", Math.max(1, mysqlPage.getTotalPages()));
+        return result;
+    }
+
+    private Map<String, Object> buildDocEntryFromRecord(com.zhy.workflow.ai.entity.DocumentRecord record) {
+        Map<String, Object> doc = new LinkedHashMap<>();
+        doc.put("id", record.getDocId());
+        doc.put("docId", record.getDocId());
+        doc.put("fileName", record.getFileName());
+        doc.put("fileType", record.getFileType());
+        doc.put("fileSize", record.getFileSize());
+        doc.put("chunkCount", record.getChunkCount());
+        doc.put("uploadTime", record.getCreatedAt() != null ? record.getCreatedAt().toString() : "");
+        doc.put("esStatus", record.getEsStatus() != null ? record.getEsStatus() : "pending");
+        doc.put("milvusStatus", record.getMilvusStatus() != null ? record.getMilvusStatus() : "pending");
+
+        // 计算综合状态
+        boolean esOk = "indexed".equals(record.getEsStatus());
+        boolean milOk = "indexed".equals(record.getMilvusStatus());
+        if (esOk && milOk) doc.put("indexStatus", "completed");
+        else if (!esOk && !milOk) doc.put("indexStatus", "pending");
+        else doc.put("indexStatus", "partial");
+        return doc;
+    }
+
+    private Map<String, Object> paginateDocs(List<Map<String, Object>> allDocs, int page, int pageSize,
+                                              Map<String, Object> result) {
+        int total = allDocs.size();
+        int from = (page - 1) * pageSize;
+        int to = Math.min(from + pageSize, total);
+        List<Map<String, Object>> pageDocs = from < total ? allDocs.subList(from, to) : Collections.emptyList();
+        result.put("documents", pageDocs);
+        result.put("total", total);
+        result.put("page", page);
+        result.put("pageSize", pageSize);
+        result.put("totalPages", Math.max(1, (int) Math.ceil((double) total / pageSize)));
         return result;
     }
 

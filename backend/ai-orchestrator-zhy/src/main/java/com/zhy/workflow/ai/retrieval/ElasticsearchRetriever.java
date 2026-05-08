@@ -73,7 +73,10 @@ public class ElasticsearchRetriever {
      */
     public void indexDocument(String docId, String chunkId, String content,
                               String fileName, String fileType, String title) {
-        if (!available) return;
+        if (!available) {
+            log.warn("ES 不可用，跳过索引写入: docId={}, chunkId={}", docId, chunkId);
+            return;
+        }
         ensureIndex();
         try {
             esClient.index(i -> i
