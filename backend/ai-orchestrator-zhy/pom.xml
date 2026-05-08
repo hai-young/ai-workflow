@@ -21,7 +21,7 @@
         <java.version>21</java.version>
         <spring-ai.version>1.1.4</spring-ai.version>
         <langgraph4j.version>1.8.13</langgraph4j.version>
-        <milvus.version>2.6.18</milvus.version>
+        <milvus.version>2.5.9</milvus.version>
         <mysql.version>8.0.33</mysql.version>
         <lombok.version>1.18.30</lombok.version>
     </properties>
@@ -151,6 +151,26 @@
             <artifactId>lombok</artifactId>
             <version>${lombok.version}</version>
             <scope>provided</scope>
+        </dependency>
+
+        <!-- Elasticsearch Java Client -->
+        <dependency>
+            <groupId>co.elastic.clients</groupId>
+            <artifactId>elasticsearch-java</artifactId>
+            <version>8.12.2</version>
+        </dependency>
+
+        <!-- MinIO Java Client（原始文档持久化） -->
+        <dependency>
+            <groupId>io.minio</groupId>
+            <artifactId>minio</artifactId>
+            <version>8.5.10</version>
+        </dependency>
+
+        <!-- Redis（对话记忆） -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
         </dependency>
 
         <!-- 测试 -->

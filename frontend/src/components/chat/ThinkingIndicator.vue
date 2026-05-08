@@ -6,13 +6,15 @@ import type { ThinkingStep } from '@/types/chat'
 const props = defineProps<{ steps?: ThinkingStep[]; currentStage?: string | null }>()
 const chatStore = useChatStore()
 
-const steps = computed(() =>
-  props.steps ?? chatStore.activeThinking?.steps ?? []
-)
-const currentStage = computed(() =>
-  props.currentStage ?? chatStore.activeThinking?.currentStage
-)
-const isLive = computed(() => !!currentStage.value)
+const steps = computed(() => {
+  if (props.steps !== undefined) return props.steps
+  return chatStore.activeThinking?.steps ?? []
+})
+const currentStage = computed(() => {
+  if (props.currentStage !== undefined) return props.currentStage
+  return chatStore.activeThinking?.currentStage
+})
+const isDone = computed(() => steps.value.length > 0 && !currentStage.value)
 
 const stageMeta: Record<string, { icon: string; label: string }> = {
   intent: { icon: '🎯', label: '意图识别' },
@@ -26,59 +28,42 @@ const orderedStages = ['intent', 'rewrite', 'retrieval', 'rerank']
 const stageStates = computed(() =>
   orderedStages.map(stage => {
     const step = steps.value.find(s => s.stage === stage)
-    return {
-      key: stage,
-      meta: stageMeta[stage] || { icon: '●', label: stage },
-      done: !!step,
-      current: currentStage.value === stage,
-      step,
-    }
-  })
+    const meta = stageMeta[stage] || { icon: '●', label: stage }
+    const done = !!step
+    const current = currentStage.value === stage
+    return { key: stage, meta, done, current, step }
+  }).filter(s => s.done || s.current)
 )
 
-function detailHtml(s: ReturnType<typeof stageStates.value>[0]): string {
+function stepDetail(s: { step?: { intent?: string; rewritten_query?: string; count?: number } }): string {
   const st = s.step
   if (!st) return ''
-  if (st.intent) return `意图: ${st.intent}`
-  if (st.rewritten_query) return `改写: ${st.rewritten_query}`
+  if (st.intent) return st.intent
+  if (st.rewritten_query) return st.rewritten_query
   if (st.count != null) return `${st.count} 篇文档`
   return ''
 }
 </script>
 
 <template>
-  <div v-if="steps.length > 0" class="thinking-indicator" :class="{ live: isLive, done: !isLive }">
+  <div v-if="steps.length > 0" class="thinking-indicator" :class="{ done: isDone }">
     <div class="thinking-header">
-      <span v-if="isLive" class="pulsing-dot"></span>
-      {{ isLive ? '思考中...' : '思考过程' }}
+      <span v-if="!isDone" class="pulsing-dot"></span>
+      {{ isDone ? '思考过程' : '思考中...' }}
     </div>
 
-    <!-- Live mode: compact horizontal steps -->
-    <div v-if="isLive" class="thinking-steps">
+    <div class="thinking-rows">
       <div
         v-for="s in stageStates"
         :key="s.key"
-        class="thinking-step"
+        class="think-row"
         :class="{ done: s.done, current: s.current }"
       >
-        <span class="step-dot" :class="{ pulse: s.current }"></span>
-        <span class="step-icon">{{ s.meta.icon }}</span>
-        <span class="step-label">{{ s.meta.label }}</span>
-        <span v-if="s.done" class="step-check">✓</span>
-        <span v-if="s.detail && s.current" class="step-detail">{{ detailHtml(s) }}</span>
-      </div>
-    </div>
-
-    <!-- Done mode: detailed card per stage -->
-    <div v-else class="thinking-details">
-      <div
-        v-for="s in stageStates.filter(x => x.done)"
-        :key="s.key"
-        class="detail-row"
-      >
-        <span class="detail-icon">{{ s.meta.icon }}</span>
-        <span class="detail-label">{{ s.meta.label }}</span>
-        <span class="detail-value">{{ detailHtml(s) }}</span>
+        <span class="row-dot" :class="{ pulse: s.current }"></span>
+        <span class="row-icon">{{ s.meta.icon }}</span>
+        <span class="row-label">{{ s.meta.label }}</span>
+        <span v-if="s.done" class="row-check">✓</span>
+        <span v-if="s.done && stepDetail(s)" class="row-value">{{ stepDetail(s) }}</span>
       </div>
     </div>
   </div>
@@ -86,8 +71,8 @@ function detailHtml(s: ReturnType<typeof stageStates.value>[0]): string {
 
 <style scoped lang="scss">
 .thinking-indicator {
-  background: rgba(59, 130, 246, 0.04);
-  border: 1px solid rgba(59, 130, 246, 0.12);
+  background: rgba(59, 130, 246, 0.03);
+  border: 1px solid rgba(59, 130, 246, 0.1);
   border-radius: 8px;
   padding: 10px 14px;
   margin-bottom: 10px;
@@ -96,7 +81,7 @@ function detailHtml(s: ReturnType<typeof stageStates.value>[0]): string {
 
   &.done {
     background: rgba(34, 197, 94, 0.03);
-    border-color: rgba(34, 197, 94, 0.1);
+    border-color: rgba(34, 197, 94, 0.08);
   }
 }
 
@@ -104,14 +89,12 @@ function detailHtml(s: ReturnType<typeof stageStates.value>[0]): string {
   font-size: 11px;
   font-weight: 600;
   color: #848e9c;
-  margin-bottom: 8px;
+  margin-bottom: 6px;
   display: flex;
   align-items: center;
   gap: 6px;
 
-  .done & {
-    color: #22c55e;
-  }
+  .done & { color: #22c55e; }
 }
 
 .pulsing-dot {
@@ -122,37 +105,31 @@ function detailHtml(s: ReturnType<typeof stageStates.value>[0]): string {
   animation: dotPulse 1.5s ease-in-out infinite;
 }
 
-// ── Live steps (horizontal) ──
-.thinking-steps {
+.thinking-rows {
   display: flex;
-  gap: 10px;
-  flex-wrap: wrap;
+  flex-direction: column;
+  gap: 1px;
 }
 
-.thinking-step {
+.think-row {
   display: flex;
   align-items: center;
-  gap: 4px;
+  gap: 6px;
+  padding: 3px 0;
   font-size: 12px;
   color: #505968;
-  transition: all 0.2s ease;
-  position: relative;
+  transition: color 0.2s;
 
-  &.done {
-    color: #22c55e;
-  }
-  &.current {
-    color: #3b82f6;
-    font-weight: 500;
-  }
+  &.done { color: #848e9c; }
+  &.current { color: #3b82f6; font-weight: 500; }
 }
 
-.step-dot {
+.row-dot {
   width: 6px;
   height: 6px;
   border-radius: 50%;
   background: #505968;
-  transition: background 0.2s;
+  flex-shrink: 0;
 
   .done & { background: #22c55e; }
   .current & { background: #3b82f6; }
@@ -162,53 +139,14 @@ function detailHtml(s: ReturnType<typeof stageStates.value>[0]): string {
   }
 }
 
-.step-icon { font-size: 13px; }
-.step-label { white-space: nowrap; }
-.step-check { font-size: 10px; color: #22c55e; font-weight: 700; }
+.row-icon { font-size: 13px; flex-shrink: 0; }
+.row-label { min-width: 60px; flex-shrink: 0; }
+.row-check { font-size: 10px; color: #22c55e; font-weight: 700; }
 
-.step-detail {
-  position: absolute;
-  left: 0;
-  top: 100%;
-  margin-top: 4px;
-  font-size: 11px;
-  color: #848e9c;
-  background: #15191f;
-  padding: 2px 8px;
-  border-radius: 4px;
-  white-space: nowrap;
-  z-index: 1;
-}
-
-// ── Done details (vertical card) ──
-.thinking-details {
-  display: flex;
-  flex-direction: column;
-  gap: 2px;
-}
-
-.detail-row {
-  display: flex;
-  align-items: center;
-  gap: 8px;
-  padding: 4px 0;
-  font-size: 12px;
-}
-
-.detail-icon {
-  font-size: 13px;
-  flex-shrink: 0;
-}
-
-.detail-label {
-  color: #848e9c;
-  min-width: 60px;
-  font-weight: 500;
-}
-
-.detail-value {
+.row-value {
   color: #e8ecf1;
-  flex: 1;
+  font-size: 12px;
+  margin-left: auto;
 }
 
 @keyframes dotPulse {
