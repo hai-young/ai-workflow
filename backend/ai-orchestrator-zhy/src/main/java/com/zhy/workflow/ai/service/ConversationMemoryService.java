@@ -165,6 +165,7 @@ public class ConversationMemoryService {
     /**
      * 清除指定会话：MySQL + Redis。
      */
+    @org.springframework.transaction.annotation.Transactional
     public void clear(String sessionId) {
         messageRepository.deleteBySessionId(sessionId);
         conversationRepository.deleteBySessionId(sessionId);
