@@ -126,7 +126,8 @@ public class ElasticsearchRetriever {
                                         .analyzer("ik_smart_analyzer")))
                                 .properties("file_type", p -> p.keyword(k -> k))
                                 .properties("file_name", p -> p.keyword(k -> k))
-                                .properties("upload_time", p -> p.date(d -> d.format("yyyy-MM-dd HH:mm:ss")))
+                                .properties("upload_time", p -> p.date(d -> d
+                                        .format("yyyy-MM-dd HH:mm:ss||yyyy-MM-dd'T'HH:mm:ss||yyyy-MM-dd'T'HH:mm:ss.SSSSSSSSS||epoch_millis")))
                                 .properties("milvus_id", p -> p.keyword(k -> k))
                                 .properties("metadata_str", p -> p.text(t -> t.index(false))))
                 ));
