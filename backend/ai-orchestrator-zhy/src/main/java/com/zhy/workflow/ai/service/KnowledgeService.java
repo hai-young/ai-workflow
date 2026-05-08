@@ -214,23 +214,14 @@ public class KnowledgeService {
             }
         }
 
-        // ── 主路径：MySQL 分页查询 ──
+        // ── 主路径：MySQL 分页查询（关键词在数据库层 LIKE 过滤）──
         org.springframework.data.domain.Page<com.zhy.workflow.ai.entity.DocumentRecord> mysqlPage =
-                documentLifecycleService.listDocuments(page, pageSize);
+                documentLifecycleService.listDocuments(page, pageSize, keyword);
 
         List<Map<String, Object>> docs = mysqlPage.getContent().stream()
                 .map(this::buildDocEntryFromRecord)
                 .collect(Collectors.toList());
 
-        // 关键词搜索：MySQL 按文件名模糊匹配
-        if (hasFilter(keyword)) {
-            docs = docs.stream()
-                    .filter(d -> {
-                        String fn = (String) d.get("fileName");
-                        return fn != null && fn.toLowerCase().contains(keyword.trim().toLowerCase());
-                    })
-                    .collect(Collectors.toList());
-        }
         // 按 indexStatus 过滤
         if (hasFilter(indexStatus)) {
             docs = docs.stream()

@@ -12,6 +12,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.PageRequest;
+import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -138,6 +139,17 @@ public class DocumentLifecycleService {
     public Page<DocumentRecord> listDocuments(int page, int pageSize) {
         return documentRepository.findAll(
                 PageRequest.of(page - 1, pageSize, Sort.by("createdAt").descending()));
+    }
+
+    /**
+     * 分页获取文档列表，支持按文件名关键词过滤。
+     */
+    public Page<DocumentRecord> listDocuments(int page, int pageSize, String keyword) {
+        Pageable pageable = PageRequest.of(page - 1, pageSize, Sort.by("createdAt").descending());
+        if (keyword != null && !keyword.trim().isEmpty()) {
+            return documentRepository.findByFileNameContainingIgnoreCase(keyword.trim(), pageable);
+        }
+        return documentRepository.findAll(pageable);
     }
 
     /**

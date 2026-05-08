@@ -17,7 +17,7 @@ public interface DocumentRepository extends JpaRepository<DocumentRecord, Long> 
 
     Page<DocumentRecord> findAll(Pageable pageable);
 
-    Page<DocumentRecord> findByFileNameContainingOrFileType(String keyword, String fileType, Pageable pageable);
+    Page<DocumentRecord> findByFileNameContainingIgnoreCase(String keyword, Pageable pageable);
 
     long countByEsStatusAndMilvusStatus(String esStatus, String milvusStatus);
 }
