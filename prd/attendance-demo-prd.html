@@ -1,0 +1,1901 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>百人企业考勤系统 Demo · 产品需求文档</title>
+<style>
+:root{
+  --bg:#f5f6fa;--card:#fff;--ink:#17203a;--ink2:#344054;--muted:#667085;
+  --line:#e4e7ec;--line2:#eef0f5;--primary:#2f5bea;--primary2:#1f47c9;
+  --primary-soft:#eef2ff;--green:#067647;--green-soft:#ecfdf3;
+  --amber:#b54708;--amber-soft:#fffaeb;--red:#b42318;--red-soft:#fef3f2;
+  --nav:#0d1526;--radius:12px;
+  --shadow:0 1px 2px rgba(16,24,40,.04),0 8px 24px rgba(16,24,40,.06);
+}
+*{box-sizing:border-box}
+html{scroll-behavior:smooth}
+body{margin:0;background:var(--bg);color:var(--ink);font-size:14.5px;line-height:1.78;
+  font-family:-apple-system,BlinkMacSystemFont,"Segoe UI","PingFang SC","Hiragino Sans GB","Microsoft YaHei",sans-serif;
+  -webkit-font-smoothing:antialiased}
+a{color:var(--primary)}
+#progressBar{position:fixed;top:0;left:0;height:2px;width:0;background:var(--primary);z-index:300;transition:width .1s linear}
+.sidebar{position:fixed;left:0;top:0;bottom:0;width:264px;background:var(--nav);color:#c7d2e4;padding:24px 18px;overflow-y:auto;z-index:100}
+.brand{display:flex;align-items:center;gap:10px;padding:0 8px 18px;border-bottom:1px solid rgba(255,255,255,.08);margin-bottom:16px}
+.brand-mark{width:34px;height:34px;border-radius:9px;background:linear-gradient(135deg,#4f7cff,#2f5bea);display:grid;place-items:center;color:#fff;font-weight:800;font-size:14px;letter-spacing:.02em}
+.brand-txt strong{display:block;color:#fff;font-size:13.5px;letter-spacing:.01em}
+.brand-txt span{display:block;font-size:10.5px;color:#8494ad;margin-top:1px;letter-spacing:.08em;text-transform:uppercase}
+.nav{display:flex;flex-direction:column;gap:2px}
+.nav a{display:flex;align-items:center;gap:9px;padding:8px 10px;border-radius:8px;color:#9aa9c1;text-decoration:none;font-size:12.5px;transition:.15s}
+.nav a:hover{background:rgba(255,255,255,.06);color:#fff}
+.nav a.active{background:rgba(79,124,255,.18);color:#fff;box-shadow:inset 2px 0 0 #4f7cff}
+.nav .n{font-size:10.5px;color:#5f718e;font-variant-numeric:tabular-nums;width:16px}
+.nav a.active .n{color:#9db6ff}
+.side-meta{margin-top:22px;padding:12px 10px;border-top:1px solid rgba(255,255,255,.07);font-size:10.5px;color:#6b7c96;line-height:1.8}
+.side-meta b{color:#a9b8cd;font-weight:600}
+.main{margin-left:264px;padding:0 40px 80px}
+.wrap{max-width:1040px;margin:0 auto}
+.cover{padding:58px 0 34px;border-bottom:1px solid var(--line)}
+.eyebrow{font-size:11px;letter-spacing:.18em;text-transform:uppercase;color:var(--primary);font-weight:700;margin-bottom:14px}
+.cover h1{font-size:42px;line-height:1.16;letter-spacing:-.02em;margin:0 0 16px;font-weight:750}
+.cover h1 span{display:block;font-size:26px;color:#475467;font-weight:600;letter-spacing:-.01em;margin-top:6px}
+.lead{max-width:740px;color:var(--muted);font-size:15px;line-height:1.9;margin:0}
+.meta-grid{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-top:30px}
+.meta-grid div{border-left:2px solid var(--line);padding-left:12px}
+.meta-grid span{display:block;font-size:10.5px;color:#98a2b3;letter-spacing:.06em;text-transform:uppercase;margin-bottom:3px}
+.meta-grid strong{font-size:13.5px;font-weight:650;color:var(--ink)}
+.pills{display:flex;flex-wrap:wrap;gap:7px;margin-top:24px}
+.pill{font-size:11.5px;padding:4px 10px;border-radius:999px;background:#fff;border:1px solid var(--line);color:#475467}
+.pill.blue{background:var(--primary-soft);border-color:#dbe4ff;color:var(--primary2)}
+section{padding-top:46px;scroll-margin-top:20px}
+.sec-head{display:flex;align-items:baseline;gap:12px;margin-bottom:6px}
+.sec-head .num{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:12px;color:var(--primary);font-weight:700;letter-spacing:.04em}
+h2{font-size:24px;line-height:1.35;margin:0;letter-spacing:-.01em;font-weight:700}
+h3{font-size:16.5px;margin:30px 0 8px;font-weight:650;letter-spacing:-.005em}
+h4{font-size:14px;margin:20px 0 6px;font-weight:650}
+p{margin:8px 0;color:var(--ink2);line-height:1.85}
+ul,ol{margin:8px 0;padding-left:20px;color:var(--ink2);line-height:1.85}
+li{margin:4px 0}
+.lead-p{font-size:14.5px;color:var(--muted)}
+.callout{padding:13px 16px;border-radius:10px;background:var(--primary-soft);border-left:3px solid var(--primary);font-size:13px;line-height:1.8;color:#344054;margin:14px 0}
+.callout.warn{background:var(--amber-soft);border-left-color:#f79009}
+.callout.danger{background:var(--red-soft);border-left-color:#f04438}
+.callout.ok{background:var(--green-soft);border-left-color:#12b76a}
+.callout b{color:var(--ink)}
+.table-wrap{overflow-x:auto;border:1px solid var(--line);border-radius:10px;background:#fff;margin:12px 0 16px}
+table{width:100%;border-collapse:collapse;font-size:13px;min-width:560px}
+th{background:#f8f9fc;text-align:left;padding:9px 12px;font-weight:650;color:#475467;border-bottom:1px solid var(--line);white-space:nowrap}
+td{padding:9px 12px;border-bottom:1px solid var(--line2);vertical-align:top;color:var(--ink2);line-height:1.7}
+tr:last-child td{border-bottom:0}
+td b{color:var(--ink);font-weight:650}
+.tag{display:inline-block;font-size:11px;padding:1px 7px;border-radius:5px;background:#f2f4f7;color:#475467;white-space:nowrap}
+.tag.p0{background:var(--primary-soft);color:var(--primary2)}
+.tag.p1{background:#f2f4f7;color:#667085}
+.tag.tbd{background:var(--amber-soft);color:var(--amber)}
+.tag.dec{background:var(--green-soft);color:var(--green)}
+.fr{background:#fff;border:1px solid var(--line);border-radius:12px;margin:16px 0;overflow:hidden;box-shadow:var(--shadow)}
+.fr-head{display:flex;align-items:center;gap:10px;padding:13px 17px;background:#fcfcfe;border-bottom:1px solid var(--line2)}
+.fr-id{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:11px;font-weight:700;color:var(--primary2);background:var(--primary-soft);padding:2px 7px;border-radius:5px}
+.fr-title{font-size:15px;font-weight:650}
+.fr-pri{margin-left:auto;font-size:10.5px;color:#667085;background:#f2f4f7;padding:2px 7px;border-radius:5px}
+.fr-body{padding:12px 17px 15px}
+.fr-body p{margin:6px 0}
+.fr-body ul{margin:6px 0}
+.kv{display:flex;flex-wrap:wrap;gap:6px 18px;font-size:11.5px;color:var(--muted);margin:2px 0 8px}
+.kv b{color:#475467;font-weight:600}
+.rules{margin:6px 0;padding-left:18px}
+.rules li{margin:3px 0;font-size:13.5px}
+.demo{background:#eef1f7;border:1px solid #dfe4ee;border-radius:16px;padding:18px;margin:22px 0}
+.demo-head{display:flex;justify-content:space-between;align-items:flex-start;gap:12px;margin-bottom:14px}
+.demo-title{font-size:13.5px;font-weight:650;color:var(--ink)}
+.demo-sub{font-size:11.5px;color:var(--muted);margin-top:2px}
+.demo-tag{font-family:ui-monospace,SFMono-Regular,Menlo,monospace;font-size:10.5px;background:#101828;color:#fff;padding:2px 6px;border-radius:4px;margin-right:7px}
+.demo-link{font-size:11px;color:var(--primary);background:none;border:0;cursor:pointer;padding:2px 0;text-decoration:underline;text-underline-offset:3px}
+.demo-note{font-size:11px;color:#667085;margin-top:10px;line-height:1.7}
+.phone{width:376px;max-width:100%;margin:0 auto;background:#fff;border-radius:34px;border:7px solid #111827;box-shadow:0 20px 50px rgba(16,24,40,.18);overflow:hidden}
+.phone-top{background:#101828;color:#fff;font-size:10.5px;padding:7px 16px;display:flex;justify-content:space-between;align-items:center;letter-spacing:.02em}
+.phone-body{padding:13px 15px 16px}
+.phone-nav{display:flex;justify-content:space-around;padding:8px 0 7px;border-top:1px solid var(--line2);font-size:10px;color:#98a2b3}
+.phone-nav span.active{color:var(--primary);font-weight:650}
+.punch-hero{background:linear-gradient(135deg,#2447c9,#4f7cff);border-radius:15px;padding:13px 15px;color:#fff;position:relative;overflow:hidden}
+.punch-hero:after{content:"";position:absolute;right:-30px;top:-40px;width:130px;height:130px;border-radius:50%;background:rgba(255,255,255,.09)}
+.punch-hero .date{font-size:10.5px;opacity:.82}
+.punch-hero .clock{font-size:29px;font-weight:700;line-height:1.25;font-variant-numeric:tabular-nums;letter-spacing:.01em}
+.punch-hero .shift{font-size:10.5px;opacity:.85}
+.punch-hero .status-line{display:inline-flex;align-items:center;gap:4px;margin-top:8px;background:rgba(255,255,255,.16);padding:3px 9px;border-radius:999px;font-size:10.5px}
+.tabs{display:flex;gap:4px;background:#e9edf5;padding:4px;border-radius:10px;margin:12px 0}
+.tab{flex:1;border:0;background:transparent;padding:6px 4px;font-size:11.5px;color:#667085;border-radius:7px;cursor:pointer;font-family:inherit;transition:.15s;white-space:nowrap}
+.tab:hover{color:var(--ink)}
+.tab.active{background:#fff;color:var(--primary2);font-weight:650;box-shadow:0 1px 3px rgba(16,24,40,.12)}
+.panel{display:none}
+.panel.active{display:block}
+.today-list{border:1px solid var(--line2);border-radius:11px;background:#fcfcfe;padding:8px 11px;margin-top:11px}
+.today-row{display:flex;justify-content:space-between;align-items:center;font-size:11.5px;color:#667085;padding:3px 0}
+.today-row b{color:var(--ink);font-variant-numeric:tabular-nums;font-weight:650}
+.map{height:124px;border-radius:11px;border:1px solid #e1e6f2;position:relative;overflow:hidden;
+  background:linear-gradient(#e8edf7 1px,transparent 1px) 0 0/100% 22px,
+             linear-gradient(90deg,#e8edf7 1px,transparent 1px) 0 0/22px 100%,#f7f9fd}
+.map .fence{position:absolute;left:50%;top:50%;width:118px;height:118px;transform:translate(-50%,-50%);border:1.5px dashed rgba(47,91,234,.55);border-radius:50%;background:rgba(47,91,234,.07)}
+.map .pin{position:absolute;left:50%;top:50%;transform:translate(-50%,-50%);width:9px;height:9px;background:var(--primary);border-radius:50%;box-shadow:0 0 0 5px rgba(47,91,234,.18)}
+.map-label{position:absolute;left:9px;bottom:7px;background:#fff;border:1px solid var(--line);border-radius:5px;padding:1px 6px;font-size:10px;color:#667085}
+.qr-box{display:flex;align-items:center;gap:14px;justify-content:center;padding:6px 0}
+.qr{width:144px;height:144px;background:#fff;border:1px solid var(--line);padding:5px;display:grid;grid-template-columns:repeat(21,1fr);grid-template-rows:repeat(21,1fr);flex:none}
+.qr i{display:block}
+.qr i.d{background:#101828}
+.qr-side{font-size:11px;color:var(--muted);line-height:1.75}
+.qr-side b{display:block;color:var(--ink);font-size:15px;font-variant-numeric:tabular-nums;margin:2px 0 6px}
+.face-box{display:flex;align-items:center;gap:14px;padding:6px 0}
+.face-ring{width:112px;height:112px;border-radius:50%;border:3px dashed #b9c6e6;display:grid;place-items:center;flex:none;background:#f7f9ff;transition:.2s}
+.face-ring.scanning{border-color:var(--primary);animation:pulse 1s ease-in-out infinite}
+.face-ring.done{border-color:#12b76a;border-style:solid;background:var(--green-soft)}
+@keyframes pulse{0%,100%{box-shadow:0 0 0 0 rgba(47,91,234,.18)}50%{box-shadow:0 0 0 10px rgba(47,91,234,0)}}
+.face-side{font-size:11px;color:var(--muted);line-height:1.75}
+.face-side b{display:block;color:var(--ink);font-size:12.5px;margin-bottom:3px}
+.field{margin-bottom:9px}
+.field label{display:block;font-size:11px;font-weight:600;color:#475467;margin-bottom:4px}
+.field input,.field select,.field textarea{width:100%;padding:7px 9px;border:1px solid #d0d5dd;border-radius:7px;background:#fff;font-family:inherit;font-size:12px;color:var(--ink);outline:none}
+.field input:focus,.field select:focus,.field textarea:focus{border-color:var(--primary);box-shadow:0 0 0 3px rgba(47,91,234,.12)}
+.field textarea{min-height:62px;resize:vertical}
+.check{display:flex;align-items:center;gap:6px;font-size:11px;color:#475467;margin:5px 0;line-height:1.5}
+.check input{width:auto;margin:0;accent-color:var(--primary)}
+.btn{border:0;background:var(--primary);color:#fff;font-family:inherit;font-size:12px;font-weight:600;padding:8px 14px;border-radius:8px;cursor:pointer;transition:.15s}
+.btn:hover{background:var(--primary2)}
+.btn:disabled{opacity:.45;cursor:not-allowed}
+.btn.ghost{background:#fff;color:#344054;border:1px solid #d0d5dd}
+.btn.ghost:hover{background:#f9fafb}
+.btn.danger{background:#d92d20}
+.btn.danger:hover{background:#b42318}
+.btn.sm{font-size:11px;padding:5px 9px;border-radius:6px}
+.btn-row{display:flex;gap:7px;margin-top:9px}
+.msg{font-size:11px;line-height:1.6;margin-top:7px;min-height:16px}
+.msg.ok{color:var(--green)}
+.msg.err{color:var(--red)}
+.msg.info{color:#667085}
+.chip{display:inline-flex;align-items:center;font-size:10.5px;padding:1px 7px;border-radius:999px;background:#f2f4f7;color:#475467;white-space:nowrap}
+.chip.green{background:var(--green-soft);color:var(--green)}
+.chip.amber{background:var(--amber-soft);color:var(--amber)}
+.chip.red{background:var(--red-soft);color:var(--red)}
+.chip.blue{background:var(--primary-soft);color:var(--primary2)}
+.chip.gray{background:#f2f4f7;color:#667085}
+.desk{background:#fff;border:1px solid var(--line);border-radius:12px;padding:15px;box-shadow:var(--shadow)}
+.desk-head{display:flex;justify-content:space-between;align-items:center;gap:8px;border-bottom:1px solid var(--line2);padding-bottom:9px;margin-bottom:11px;flex-wrap:wrap}
+.desk-title{font-size:13px;font-weight:650}
+.desk-sub{font-size:10.5px;color:var(--muted);margin-top:1px}
+.rec-table{width:100%;border-collapse:collapse;font-size:11.5px;min-width:0}
+.rec-table th{padding:7px 8px;font-size:10.5px;background:#f8f9fc;white-space:nowrap}
+.rec-table td{padding:7px 8px;font-size:11.5px}
+.rec-table tr.hide{display:none}
+.filter-row{display:flex;gap:5px;flex-wrap:wrap;margin-bottom:9px}
+.filter-btn{border:1px solid var(--line);background:#fff;color:#667085;font-family:inherit;font-size:11px;padding:4px 9px;border-radius:6px;cursor:pointer}
+.filter-btn.active{background:var(--primary-soft);border-color:#c9d6ff;color:var(--primary2);font-weight:600}
+.appr-card{border:1px solid var(--line);border-radius:9px;padding:9px 11px;background:#fff;margin-bottom:8px}
+.appr-top{display:flex;justify-content:space-between;align-items:center;gap:8px}
+.appr-name{font-size:12px;font-weight:650}
+.appr-meta{font-size:10.5px;color:var(--muted)}
+.appr-reason{font-size:11px;color:#475467;background:#f8f9fc;border-radius:6px;padding:6px 8px;margin:6px 0;line-height:1.65}
+.appr-foot{display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap}
+.appr-empty{text-align:center;font-size:11.5px;color:#98a2b3;padding:18px 0}
+.done-item{font-size:11px;color:#475467;padding:6px 0;border-bottom:1px dashed var(--line2);display:flex;justify-content:space-between;gap:8px}
+.stat-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:7px;margin-bottom:12px}
+.stat{border:1px solid var(--line);border-radius:8px;padding:8px 9px;background:#fcfcfe}
+.stat .v{font-size:19px;font-weight:700;line-height:1.3;font-variant-numeric:tabular-nums}
+.stat .l{font-size:10px;color:var(--muted);white-space:nowrap}
+.stat.warn .v{color:var(--amber)}
+.stat.red .v{color:var(--red)}
+.stat.green .v{color:var(--green)}
+.bar-row{display:grid;grid-template-columns:62px 1fr 38px;align-items:center;gap:8px;font-size:10.5px;color:#667085;margin:6px 0}
+.bar-track{height:7px;background:#eef0f6;border-radius:999px;overflow:hidden}
+.bar-fill{height:100%;background:linear-gradient(90deg,#4f7cff,#2f5bea);border-radius:999px}
+.bar-val{text-align:right;font-variant-numeric:tabular-nums;color:#475467}
+.rule-grid{display:grid;grid-template-columns:1fr 1fr;gap:0 12px}
+.rule-grid .full{grid-column:1/-1}
+.audit-list{list-style:none;padding:0;margin:8px 0 0;font-size:10.5px;color:#667085}
+.audit-list li{padding:5px 0;border-bottom:1px dashed var(--line2);line-height:1.6}
+.flow{display:flex;align-items:stretch;gap:6px;flex-wrap:wrap;margin:14px 0 18px}
+.flow-node{flex:1;min-width:118px;background:#fff;border:1px solid var(--line);border-radius:9px;padding:9px 11px;font-size:11.5px;line-height:1.6;color:#667085}
+.flow-node strong{display:block;font-size:12px;color:var(--ink);font-weight:650;margin-bottom:1px}
+.flow-node.blue{background:var(--primary-soft);border-color:#c9d6ff}
+.flow-node.blue strong{color:var(--primary2)}
+.flow-arrow{align-self:center;color:#98a2b3;font-size:15px}
+.modal-mask{position:fixed;inset:0;background:rgba(16,24,40,.55);display:none;align-items:center;justify-content:center;z-index:200;padding:20px}
+.modal-mask.open{display:flex}
+.modal{width:440px;max-width:100%;max-height:90vh;overflow:auto;background:#fff;border-radius:14px;padding:20px;box-shadow:0 24px 60px rgba(16,24,40,.3)}
+.modal h4{margin:0 0 4px;font-size:16px}
+.modal .sub{font-size:11.5px;color:var(--muted);margin-bottom:14px}
+.modal-foot{display:flex;justify-content:flex-end;gap:8px;margin-top:14px}
+#toast{position:fixed;left:50%;bottom:26px;transform:translate(-50%,12px);background:#101828;color:#fff;font-size:12.5px;padding:9px 16px;border-radius:999px;z-index:400;opacity:0;pointer-events:none;transition:.22s;max-width:88vw;text-align:center}
+#toast.show{opacity:1;transform:translate(-50%,0)}
+#toast.err{background:#b42318}
+footer{margin-top:60px;padding-top:20px;border-top:1px solid var(--line);font-size:11.5px;color:#98a2b3;line-height:1.8}
+@media(max-width:1000px){
+  .sidebar{position:static;width:auto;padding:14px 18px}
+  .brand{padding-bottom:12px;margin-bottom:10px}
+  .nav{flex-direction:row;overflow-x:auto;gap:4px;padding-bottom:3px}
+  .nav a{white-space:nowrap;padding:5px 9px;font-size:11.5px}
+  .nav .n{display:none}
+  .side-meta{display:none}
+  .main{margin-left:0;padding:0 20px 60px}
+  .cover h1{font-size:31px}.cover h1 span{font-size:19px}
+  .meta-grid{grid-template-columns:1fr 1fr}
+  .stat-grid{grid-template-columns:repeat(3,1fr)}
+  .rule-grid{grid-template-columns:1fr}
+  .flow-arrow{display:none}
+}
+@media(max-width:560px){
+  .cover{padding-top:34px}
+  .cover h1{font-size:26px}.cover h1 span{font-size:16px}
+  .meta-grid{grid-template-columns:1fr}
+  .stat-grid{grid-template-columns:repeat(2,1fr)}
+  .pills{gap:5px}
+  .demo{padding:12px}
+}
+@media print{
+  .sidebar,#progressBar,#toast,.demo-link{display:none}
+  .main{margin:0;padding:0}
+  .demo{break-inside:avoid}
+}
+</style>
+</head>
+<body>
+<div id="progressBar"></div>
+
+<aside class="sidebar">
+  <div class="brand">
+    <div class="brand-mark">AT</div>
+    <div class="brand-txt"><strong>考勤系统 Demo</strong><span>Product Requirements</span></div>
+  </div>
+  <nav class="nav">
+    <a href="#s1" class="active"><span class="n">01</span>背景与目标</a>
+    <a href="#s2"><span class="n">02</span>范围与边界</a>
+    <a href="#s3"><span class="n">03</span>角色 · 对象 · 状态</a>
+    <a href="#s4"><span class="n">04</span>核心流程</a>
+    <a href="#s5"><span class="n">05</span>功能需求</a>
+    <a href="#s6"><span class="n">06</span>共享规则</a>
+    <a href="#s7"><span class="n">07</span>异常与边界</a>
+    <a href="#s8"><span class="n">08</span>Demo 与待确认</a>
+  </nav>
+  <div class="side-meta">
+    <b>版本</b> v1.0<br>
+    <b>日期</b> 2026-11-07<br>
+    <b>规模</b> 约 100 人<br>
+    <b>形态</b> AI 辅助开发 Demo
+  </div>
+</aside>
+
+<main class="main">
+<div class="wrap">
+
+<header class="cover">
+  <div class="eyebrow">Product Requirements Document</div>
+  <h1>百人企业考勤系统<span>Demo 产品需求文档</span></h1>
+  <p class="lead">本文件定义一个约 100 人公司的考勤系统 Demo 的产品行为与业务规则：员工可用定位、扫码、人脸、网页四种方式打卡，异常可在原记录上申诉，主管在线审批，HR 维护规则并完成月度结算。文档作为 AI 辅助开发的功能输入与评审依据，不描述技术实现。</p>
+  <div class="meta-grid">
+    <div><span>文档版本</span><strong>v1.0</strong></div>
+    <div><span>日期</span><strong>2026-11-07</strong></div>
+    <div><span>适用规模</span><strong>约 100 人</strong></div>
+    <div><span>优先级</span><strong>P0 闭环</strong></div>
+  </div>
+  <div class="pills">
+    <span class="pill blue">四种打卡方式</span>
+    <span class="pill">异常申诉</span>
+    <span class="pill">请假 / 加班 / 出差</span>
+    <span class="pill">主管审批</span>
+    <span class="pill">规则配置</span>
+    <span class="pill">实时看板</span>
+    <span class="pill">月度报表</span>
+    <span class="pill">操作审计</span>
+  </div>
+</header>
+
+<div class="callout">
+  <b>阅读约定：</b>标记 <span class="tag dec">Decision</span> 的是本期明确的产品决策；<span class="tag tbd">Assumption, TBD</span> 是继续推进所需的假设，需在开发前或评审中验证；<span class="tag tbd">TBD</span> 是必须由业务方拍板的问题，集中在第 8.3 节。凡未标注的内容均为本文件直接定义的需求。
+</div>
+
+<section id="s1">
+  <div class="sec-head"><span class="num">01</span><h2>背景与目标</h2></div>
+
+  <h3>1.1 现状与问题</h3>
+  <p>公司约 100 人，考勤目前依赖 Excel 台账与聊天工具报备。规模不大，但考勤同时牵涉员工、直属主管与 HR 三类角色，手工方式在月底集中暴露问题 <span class="tag tbd">Assumption, TBD</span>：</p>
+  <ul>
+    <li><b>打卡不可信</b>：纸质签到或口头报备无法识别代打卡，外勤与出差异地办公缺少可核验的凭证。</li>
+    <li><b>异常无入口</b>：迟到、缺卡的处理散落在聊天记录里，员工不知道找谁、进度如何，HR 无法统计。</li>
+    <li><b>员工看不见结果</b>：打卡后没有即时状态反馈，员工直到月底才知道自己被记为缺卡或旷工。</li>
+    <li><b>审批与考勤两张皮</b>：请假、加班在另一个流程里审批，HR 月末需要人工把审批结果与打卡记录逐条对齐。</li>
+  </ul>
+  <p>受影响的时刻很具体：员工每天上下班打卡、发现异常时；主管每周处理团队申请时；HR 每月 1–5 日结算时。</p>
+
+  <h3>1.2 产品响应</h3>
+  <p>以「一次打卡」为入口，把「记录—异常—审批—结算」串成一条闭环：员工打卡后立即看到今日状态与异常；异常直接在对应日期上发起补卡或申诉；主管在统一列表审批；系统实时重算日结果并留痕；HR 月末生成报表、核对未结项后锁定并导出。</p>
+
+  <h3>1.3 目标（可观察）</h3>
+  <ul>
+    <li>员工完成一次打卡不超过 3 次点击，并在同一屏看到今日上下班时间、打卡方式与状态。</li>
+    <li>每一条异常都能定位到具体日期、缺失的是上班卡还是下班卡，并给出处理入口与提交后的状态。</li>
+    <li>主管在一个列表内完成通过或驳回，审批结果立即反映到申请人的日结果与月度统计。</li>
+    <li>HR 生成月报后，所有未结异常逐条可见；报表锁定后，任何修改都必须先解锁并留下审计记录。</li>
+  </ul>
+  <div class="callout warn">
+    本文件不虚构转化率、工时节省等量化指标。上述目标以「用户能否完成动作、系统能否给出可见结果」衡量，避免用数字掩盖尚未验证的业务假设。
+  </div>
+</section>
+
+<section id="s2">
+  <div class="sec-head"><span class="num">02</span><h2>范围与边界</h2></div>
+
+  <h3>2.1 最小完整旅程（P0）</h3>
+  <p>本期以一条能真正走通的旅程为边界，而不是功能清单的堆叠：</p>
+  <div class="flow">
+    <div class="flow-node"><strong>入职建档</strong>加入考勤组</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><strong>工作日打卡</strong>四种方式任一</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><strong>查看今日状态</strong>正常或异常</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><strong>异常处理</strong>申诉 / 补卡</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><strong>主管审批</strong>通过 / 驳回</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><strong>日结果重算</strong>留痕</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node blue"><strong>月度结算</strong>生成 · 锁定 · 导出</div>
+  </div>
+
+  <h3>2.2 功能范围</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>模块</th><th>P0（本期 Demo 必须可用）</th><th>P1（本期不做，预留）</th></tr></thead>
+      <tbody>
+        <tr><td><b>打卡</b></td><td>定位、扫码、人脸、网页四种方式；今日状态；失败原因与替代方式</td><td>蓝牙 / Wi-Fi 自动打卡、桌面小组件</td></tr>
+        <tr><td><b>考勤记录</b></td><td>我的月历与列表、日详情、异常申诉与补卡</td><td>团队考勤日历共享</td></tr>
+        <tr><td><b>申请与审批</b></td><td>请假、加班、出差/外勤；主管审批中心；撤回与驳回</td><td>多级审批、审批代理人、批量审批</td></tr>
+        <tr><td><b>管理配置</b></td><td>考勤组与班次、办公地点、动态二维码、人脸录入状态</td><td>排班表、多班次、跨天夜班</td></tr>
+        <tr><td><b>看板与报表</b></td><td>今日实时看板、月度报表、锁定/解锁、CSV 导出</td><td>自定义报表、薪资系统对接</td></tr>
+        <tr><td><b>通知与审计</b></td><td>站内通知、关键操作审计日志</td><td>邮件 / 飞书 / 企业微信通道、审批超时自动升级</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>2.3 明确不做</h3>
+  <ul>
+    <li>薪资计算、个税与扣款规则——考勤只输出统计结果，不计算金额 <span class="tag dec">Decision</span>。</li>
+    <li>真实的人脸识别算法、活体检测模型与门禁闸机对接——Demo 以模拟流程呈现。</li>
+    <li>跨时区、多法人主体、海外办公点。</li>
+    <li>排班表与多班次轮转；本期仅支持一个考勤组对应一个固定班次。</li>
+  </ul>
+
+  <h3>2.4 Demo 保真度</h3>
+  <p>Demo 需要让评审者在不接入真实硬件的前提下走通全部业务状态，因此对能力做如下切分：</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>能力</th><th>Demo 处理</th><th>后续正式版</th></tr></thead>
+      <tbody>
+        <tr><td>GPS 定位</td><td>页面内选择「工位 / 楼下 / 家中 / 客户现场」，以固定距离模拟围栏判断</td><td>浏览器或 App 定位 + 服务端距离计算 + 虚拟定位风控</td></tr>
+        <tr><td>扫码</td><td>页面内生成动态二维码与 60 秒倒计时，模拟扫码结果</td><td>办公点屏幕动态码 + 服务端签名校验</td></tr>
+        <tr><td>人脸</td><td>动画模拟识别，可切换成功/失败，失败 3 次转人工</td><td>活体检测 + 1:1 比对 + 单独授权与底片管理</td></tr>
+        <tr><td>审批与报表</td><td>真实状态流转；姓名、日期、数据为构造数据；导出为模拟</td><td>对接真实组织架构与数据库</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    除上表标注的模拟能力外，<b>所有业务规则、状态流转与异常处理必须按本文件真实实现</b>，否则 Demo 无法验证产品决策。
+  </div>
+</section>
+
+<section id="s3">
+  <div class="sec-head"><span class="num">03</span><h2>角色、对象与状态</h2></div>
+  <p class="lead-p">考勤的复杂度来自三方共享同一份记录：员工产生记录，主管改变记录，HR 定义记录如何被计算。先把角色、对象和状态定死，后面的功能才不会各说各话。</p>
+
+  <h3>3.1 角色与权限矩阵</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>能力</th><th>员工</th><th>直属主管</th><th>HR 考勤管理员</th></tr></thead>
+      <tbody>
+        <tr><td>打卡 / 查看本人记录</td><td>✓</td><td>✓</td><td>✓（本人也需打卡）</td></tr>
+        <tr><td>查看团队考勤记录</td><td>—</td><td>仅直属下属</td><td>全公司</td></tr>
+        <tr><td>提交申诉 / 请假 / 加班 / 出差</td><td>✓</td><td>✓</td><td>✓</td></tr>
+        <tr><td>审批团队申请</td><td>—</td><td>✓</td><td>✓（兜底）</td></tr>
+        <tr><td>配置考勤组 / 班次 / 规则</td><td>—</td><td>—</td><td>✓</td></tr>
+        <tr><td>维护办公地点 / 二维码 / 人脸状态</td><td>—</td><td>—</td><td>✓</td></tr>
+        <tr><td>手工修正考勤记录</td><td>—</td><td>—</td><td>✓（必须填写原因）</td></tr>
+        <tr><td>生成 / 锁定 / 解锁月报</td><td>—</td><td>—</td><td>✓</td></tr>
+        <tr><td>查看操作审计</td><td>—</td><td>—</td><td>✓</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout">
+    <b>角色规则：</b>一个员工可以同时是主管或 HR，角色叠加；审批权限不叠加为「可审批自己」——任何角色都不得审批本人提交的申请或申诉，系统自动流转给 HR。主管缺位、离职或连续 5 个工作日未处理时，审批权回落至 HR <span class="tag tbd">Assumption, TBD</span>。
+  </div>
+
+  <h3>3.2 核心对象</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>对象</th><th>定义</th><th>关键属性</th><th>唯一性 / 归属</th></tr></thead>
+      <tbody>
+        <tr><td><b>员工档案</b></td><td>参与考勤的自然人</td><td>工号、姓名、部门、直属主管、考勤组、入职/离职日期、账号状态、人脸状态</td><td>工号唯一；一名员工同一时间只属于一个考勤组</td></tr>
+        <tr><td><b>考勤组</b></td><td>一套班次与打卡规则的作用范围</td><td>名称、适用部门/员工、班次、工作日、弹性分钟、打卡方式、定位半径、补卡上限、生效日期</td><td>组名唯一；员工只能属于一个组</td></tr>
+        <tr><td><b>班次</b></td><td>一天内应上下班的时间定义</td><td>上班时间、下班时间、午休开始/结束、弹性分钟、工作日集合</td><td>归属于考勤组</td></tr>
+        <tr><td><b>打卡记录 Punch</b></td><td>一次打卡动作产生的事实记录</td><td>员工、服务器时间、方式、办公地点、经纬度/距离、设备标识、结果、失败原因</td><td>只追加，不修改；同一员工 30 秒内相同方式幂等</td></tr>
+        <tr><td><b>考勤日结果</b></td><td>某员工某一天按规则结算后的结论</td><td>日期、班次、上班/下班卡、主状态、异常标签、工时、关联审批、结算状态</td><td>员工 + 日期唯一；由系统计算，人工只能通过申诉或 HR 修正改变</td></tr>
+        <tr><td><b>申诉</b></td><td>员工对某天日结果提出的补卡或异议</td><td>日结果、类型、补卡时间、原因、凭证、审批人、审批状态、审批意见</td><td>同一天同一类型只能有一条待审批</td></tr>
+        <tr><td><b>申请</b></td><td>请假、加班、出差/外勤的统称</td><td>类型、开始/结束时间、时长、事由、附件、审批状态、审批人</td><td>时段不得重叠；归属申请人</td></tr>
+        <tr><td><b>月度报表</b></td><td>某月所有员工考勤的汇总结果</td><td>月份、统计范围、汇总行、未结异常数、状态、版本号</td><td>月份 + 范围唯一；锁定后需解锁才能重算</td></tr>
+        <tr><td><b>审计日志</b></td><td>关键操作的不可变记录</td><td>操作人、时间、对象、动作、变更前/后、原因、IP/设备</td><td>只追加；不可编辑或删除</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>3.3 日结果状态模型</h3>
+  <p>日结果采用「主状态 + 异常标签」两层结构，避免「迟到且早退」「半天请假半天缺卡」这类组合被压成互斥单选而丢失信息 <span class="tag dec">Decision</span>。</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>主状态</th><th>含义</th><th>进入条件</th><th>说明</th></tr></thead>
+      <tbody>
+        <tr><td><b>未开始</b></td><td>当天尚未产生任何有效记录</td><td>00:00 起，未到打卡窗口或无记录</td><td>未结算前显示为「预估」</td></tr>
+        <tr><td><b>进行中</b></td><td>已产生部分打卡，但未完成</td><td>至少一次有效打卡，尚未取得下班卡</td><td>可继续打卡</td></tr>
+        <tr><td><b>正常</b></td><td>上下班卡齐全且无异常标签</td><td>取得有效上班卡与下班卡</td><td>—</td></tr>
+        <tr><td><b>异常</b></td><td>存在至少一个异常标签</td><td>触发迟到、早退、缺卡或旷工</td><td>主状态为异常，标签说明具体原因</td></tr>
+        <tr><td><b>请假</b></td><td>审批通过的请假覆盖全部应出勤时段</td><td>请假审批通过且时段完整覆盖当天</td><td>半天请假时主状态可为正常/异常，另挂「请假」标记</td></tr>
+        <tr><td><b>出差</b></td><td>审批通过的出差覆盖当天</td><td>出差审批通过且覆盖当天</td><td>是否免打卡由考勤组配置</td></tr>
+        <tr><td><b>休息</b></td><td>考勤组非工作日</td><td>星期不在工作日集合</td><td>打卡仍记录，但不产生异常</td></tr>
+        <tr><td><b>法定节假日</b></td><td>公司日历中的节假日</td><td>节假日日历命中</td><td>与休息日一样不计异常</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>异常标签</th><th>判定口径（详见 6.1）</th><th>可申诉</th></tr></thead>
+      <tbody>
+        <tr><td>迟到</td><td>有效上班卡晚于「上班时间 + 弹性分钟」</td><td>✓</td></tr>
+        <tr><td>早退</td><td>有效下班卡早于「下班时间 − 弹性分钟」</td><td>✓</td></tr>
+        <tr><td>上班缺卡</td><td>应出勤日无有效上班卡，且无覆盖上午的审批</td><td>✓（补上班卡）</td></tr>
+        <tr><td>下班缺卡</td><td>应出勤日无有效下班卡，且无覆盖下午的审批</td><td>✓（补下班卡）</td></tr>
+        <tr><td>旷工</td><td>全天无有效打卡且无审批，或半天无任何记录</td><td>✓（旷工申诉）</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <div class="callout warn">
+    日结果在次日 02:00 统一结算；结算前页面标注「预估」，结算后才作为月度统计依据。已结算的日结果只有三种方式可以改变：员工申诉通过、HR 手工修正、关联审批状态变化。每一次变化都必须写审计 <span class="tag dec">Decision</span>。
+  </div>
+
+  <h3>3.4 流程状态</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>对象</th><th>状态流转</th><th>允许的操作</th></tr></thead>
+      <tbody>
+        <tr><td>申诉 / 申请</td><td>待审批 → 已通过 / 已驳回；待审批 → 已撤回；待审批 → 已失效</td><td>申请人可在待审批时撤回；审批人可通过或驳回（驳回必填理由）；时段已过且未审批的申请在次月结算截止后失效</td></tr>
+        <tr><td>月度报表</td><td>生成中 → 已生成 → 已锁定</td><td>已生成可重新生成；已锁定需 HR 解锁后才能重算；每次重算版本号 +1</td></tr>
+        <tr><td>人脸底片</td><td>未录入 → 已录入 → 已停用</td><td>HR 发起录入；员工确认授权；停用或撤回授权后 30 日内删除 <span class="tag tbd">Assumption, TBD</span></td></tr>
+        <tr><td>办公地点</td><td>启用 → 停用</td><td>停用后该点立即不可打卡；已有记录保留</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="s4">
+  <div class="sec-head"><span class="num">04</span><h2>核心流程</h2></div>
+
+  <h3>4.1 员工打卡</h3>
+  <p>打卡页是员工每天唯一必须进入的页面。流程的目标不是「记录一个时间」，而是让员工立刻知道今天算不算正常、如果不正常下一步做什么。</p>
+  <div class="flow">
+    <div class="flow-node"><strong>进入打卡页</strong>校验登录态与考勤组</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><strong>选择方式</strong>默认考勤组首选方式</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><strong>前置校验</strong>身份 · 时间 · 范围 · 凭证</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node blue"><strong>成功</strong>写入打卡记录</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><strong>即时结果</strong>今日时间 · 状态 · 异常入口</div>
+  </div>
+  <p>失败分支不隐藏：校验不通过时，页面必须说明失败原因（超出范围、二维码过期、人脸失败、未到时间），并给出至少一种可继续完成打卡的替代方式；如果当天已无法补救，则直接给出申诉入口。详见 FR-03 至 FR-06 与第 7 节。</p>
+
+  <h3>4.2 异常处理</h3>
+  <div class="flow">
+    <div class="flow-node"><strong>日结果产生异常</strong>次日 02:00 结算</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><strong>员工收到缺卡提醒</strong>站内通知 + 记录页入口</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><strong>发起申诉 / 补卡</strong>选日期、类型、补卡时间、原因</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><strong>主管审批</strong>通过 / 驳回（必填理由）</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node blue"><strong>日结果重算</strong>标签移除或调整 · 写审计</div>
+  </div>
+  <p>驳回后员工可以补充凭证重新提交，但重新提交仍计入当月补卡次数 <span class="tag dec">Decision</span>；被驳回的申诉在记录详情中保留审批意见与时间，不因重新提交而消失。</p>
+
+  <h3>4.3 月度结算</h3>
+  <div class="flow">
+    <div class="flow-node"><strong>每月 1 日 02:00</strong>自动结算上月</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><strong>生成月报</strong>标注未结异常</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><strong>HR 核对</strong>逐条处理或确认豁免</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node blue"><strong>锁定报表</strong>不可再改</div>
+    <div class="flow-arrow">→</div>
+    <div class="flow-node"><strong>导出归档</strong>CSV / Excel</div>
+  </div>
+  <ul>
+    <li>上月申诉截止时间为次月 3 日 23:59；超过截止时间仍未提交的异常按当前结果计入月报 <span class="tag tbd">Assumption, TBD</span>。</li>
+    <li>月报锁定前必须处理或显式豁免所有「待审批」申诉与申请；未结数量在报表上单独展示，不能静默忽略。</li>
+    <li>锁定后如仍需修改，HR 解锁 → 重算 → 版本号 +1 → 重新锁定，全过程写审计。</li>
+  </ul>
+</section>
+
+<section id="s5">
+  <div class="sec-head"><span class="num">05</span><h2>功能需求</h2></div>
+  <p class="lead-p">以下按员工任务与管理任务组织。每个需求覆盖触发、处理规则、结果与异常；跨模块共用的计算与权限只在第 3、6 节定义一次，功能段引用而不重复。</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>模块</th><th>需求</th><th>优先级</th><th>交互 Demo</th></tr></thead>
+      <tbody>
+        <tr><td>身份与入口</td><td>FR-01 登录与考勤归属</td><td><span class="tag p0">P0</span></td><td>—</td></tr>
+        <tr><td rowspan="5">打卡</td><td>FR-02 打卡页与今日状态</td><td><span class="tag p0">P0</span></td><td>Demo 1</td></tr>
+        <tr><td>FR-03 定位打卡</td><td><span class="tag p0">P0</span></td><td>Demo 1</td></tr>
+        <tr><td>FR-04 扫码打卡</td><td><span class="tag p0">P0</span></td><td>Demo 1</td></tr>
+        <tr><td>FR-05 人脸识别打卡</td><td><span class="tag p0">P0</span></td><td>Demo 1</td></tr>
+        <tr><td>FR-06 网页手动打卡</td><td><span class="tag p0">P0</span></td><td>Demo 1</td></tr>
+        <tr><td rowspan="2">考勤记录</td><td>FR-07 我的考勤记录</td><td><span class="tag p0">P0</span></td><td>Demo 2</td></tr>
+        <tr><td>FR-08 异常申诉与补卡</td><td><span class="tag p0">P0</span></td><td>Demo 2</td></tr>
+        <tr><td rowspan="4">申请与审批</td><td>FR-09 请假申请</td><td><span class="tag p0">P0</span></td><td>Demo 3</td></tr>
+        <tr><td>FR-10 加班申请</td><td><span class="tag p0">P0</span></td><td>Demo 3</td></tr>
+        <tr><td>FR-11 出差 / 外勤申请</td><td><span class="tag p0">P0</span></td><td>Demo 3</td></tr>
+        <tr><td>FR-12 审批中心</td><td><span class="tag p0">P0</span></td><td>Demo 3</td></tr>
+        <tr><td rowspan="2">管理配置</td><td>FR-13 考勤组与规则</td><td><span class="tag p0">P0</span></td><td>Demo 4</td></tr>
+        <tr><td>FR-14 办公地点与打卡凭证</td><td><span class="tag p0">P0</span></td><td>Demo 4</td></tr>
+        <tr><td rowspan="2">看板与报表</td><td>FR-15 实时考勤看板</td><td><span class="tag p0">P0</span></td><td>Demo 5</td></tr>
+        <tr><td>FR-16 月度考勤报表</td><td><span class="tag p0">P0</span></td><td>Demo 5</td></tr>
+        <tr><td rowspan="2">通知与审计</td><td>FR-17 通知与提醒</td><td><span class="tag p0">P0</span></td><td>—</td></tr>
+        <tr><td>FR-18 操作审计</td><td><span class="tag p0">P0</span></td><td>—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>5.1 身份与入口</h3>
+  <div class="fr">
+    <div class="fr-head"><span class="fr-id">FR-01</span><span class="fr-title">登录与考勤归属</span><span class="fr-pri">P0</span></div>
+    <div class="fr-body">
+      <div class="kv"><span><b>角色：</b>员工 / 主管 / HR</span><span><b>触发：</b>打开系统并登录</span></div>
+      <p><b>目的：</b>在打卡前确定「这个人属于哪个考勤组、今天适用哪套规则、由谁审批」，避免打卡后才提示无归属。</p>
+      <ol class="rules">
+        <li>账号由 HR 在员工档案中创建，工号与手机号均唯一；首次登录必须修改初始密码并绑定手机号 <span class="tag tbd">Assumption, TBD</span>。</li>
+        <li>登录后按角色进入：员工进入打卡页；主管进入打卡页并显示审批角标；HR 进入今日看板，可切换到打卡页。</li>
+        <li>未分配考勤组、未设置班次或离职日期早于今天时，打卡按钮不可用，并显示具体原因与 HR 联系方式。</li>
+        <li>角色与考勤组变更由 HR 操作，下一次登录生效；变更当天的既有记录不追溯。</li>
+      </ol>
+      <p><b>结果：</b>用户进入正确首页；打卡页显示所属考勤组、班次与今日应打卡时间。</p>
+      <p><b>异常：</b>账号停用 → 登录失败并提示联系 HR；考勤组被删除 → 打卡页提示「考勤组配置异常」；一人多角色 → 入口按最高管理权限展示，但打卡始终按本人考勤组计算。</p>
+    </div>
+  </div>
+
+  <h3>5.2 打卡</h3>
+
+  <div class="fr">
+    <div class="fr-head"><span class="fr-id">FR-02</span><span class="fr-title">打卡页与今日状态</span><span class="fr-pri">P0</span></div>
+    <div class="fr-body">
+      <div class="kv"><span><b>角色：</b>员工</span><span><b>触发：</b>进入打卡页或从后台切回</span></div>
+      <p><b>布局：</b>从上到下依次为今日信息区（日期、班次、应打卡时间、状态）、打卡区（主按钮 + 四种方式切换）、今日记录区（上下班时间、方式、地点）、异常提示区（出现异常时展示申诉入口）。</p>
+      <p><b>处理规则：</b></p>
+      <ul class="rules">
+        <li>默认方式为考勤组配置的首选方式；同一天内优先记忆员工最近一次成功使用的方式 <span class="tag tbd">Assumption, TBD</span>。</li>
+        <li>有效打卡窗口为上班前 120 分钟至下班后 240 分钟。窗口外主按钮置灰，并明确显示「未到打卡时间」或「今日打卡已结束」。</li>
+        <li>打卡时间以服务器时间为准，客户端时间不参与判定；成功后 3 秒内展示方式、时间与状态，并写入今日记录。</li>
+        <li>取得上班卡后主按钮变为「下班打卡」；上下班卡齐全后按钮置灰，提示「今日已完成」，点击记录区仍可查看详情。</li>
+        <li>同一员工 30 秒内以相同方式重复提交，只保留一条有效记录（幂等），重复点击不得造成重复卡。</li>
+      </ul>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>字段</th><th>取值</th><th>必填</th><th>来源</th><th>说明</th></tr></thead>
+          <tbody>
+            <tr><td>打卡时间</td><td>日期 + 时分秒</td><td>是</td><td>服务器</td><td>不采用客户端时间</td></tr>
+            <tr><td>打卡方式</td><td>定位 / 扫码 / 人脸 / 网页</td><td>是</td><td>自动</td><td>记录后不可修改</td></tr>
+            <tr><td>办公地点</td><td>办公点名称</td><td>定位、扫码必填</td><td>自动</td><td>网页打卡允许为空</td></tr>
+            <tr><td>距离 / 精度</td><td>米</td><td>定位必填</td><td>自动</td><td>用于判定与审计</td></tr>
+            <tr><td>设备标识</td><td>浏览器 / 设备指纹</td><td>是</td><td>自动</td><td>用于风控</td></tr>
+            <tr><td>结果</td><td>有效 / 无效</td><td>是</td><td>自动</td><td>无效记录保留失败原因</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>结果：</b>新增一条打卡记录；日结果由「未开始」进入「进行中」，已有异常标签即时展示。</p>
+      <p><b>异常：</b>网络失败 → 提示重试且不生成记录；服务端与客户端时间差超过 5 分钟 → 以服务端为准并提示；跨零点 → 本期无夜班，00:00 后的卡记为次日，前一日下班缺卡进入申诉流程 <span class="tag tbd">Assumption, TBD</span>。</p>
+    </div>
+  </div>
+
+  <div class="fr">
+    <div class="fr-head"><span class="fr-id">FR-03</span><span class="fr-title">定位打卡</span><span class="fr-pri">P0</span></div>
+    <div class="fr-body">
+      <div class="kv"><span><b>前置：</b>考勤组启用定位；员工已授权定位</span><span><b>触发：</b>选择定位方式并点击打卡</span></div>
+      <p><b>处理规则：</b></p>
+      <ul class="rules">
+        <li>读取当前位置，计算与所选办公地点围栏的距离；距离 ≤ 半径且定位精度 ≤ 100 米时判定为有效。</li>
+        <li>距离超过半径 → 拒绝打卡，显示「距最近办公点约 X 米」，并提供「申请外勤 / 出差」入口。</li>
+        <li>定位精度超过 100 米、定位失败或拒绝授权 → 不允许打卡，提示改用扫码、人脸或网页，不提供「跳过定位」。</li>
+        <li>当前时段已被审批通过的外勤或出差覆盖 → 允许范围外打卡，记录标记为「外勤」。</li>
+        <li>考勤组可启用 Wi-Fi 名称辅助校验；Wi-Fi 不匹配仅提示，不单独作为拒绝依据 <span class="tag tbd">Assumption, TBD</span>。</li>
+      </ul>
+      <p><b>结果：</b>打卡记录保存办公地点、距离、精度与来源；有效卡参与日结果计算。</p>
+      <p><b>异常：</b>虚拟定位 → Demo 不检测，正式版需接入风控 <span class="tag tbd">TBD</span>；办公点停用 → 该点不可选；多办公点 → 按距离最近且启用的办公点判定。</p>
+    </div>
+  </div>
+
+  <div class="fr">
+    <div class="fr-head"><span class="fr-id">FR-04</span><span class="fr-title">扫码打卡</span><span class="fr-pri">P0</span></div>
+    <div class="fr-body">
+      <div class="kv"><span><b>前置：</b>办公点展示动态二维码，员工已授权摄像头</span><span><b>触发：</b>扫描二维码</span></div>
+      <p><b>处理规则：</b></p>
+      <ul class="rules">
+        <li>二维码每 60 秒刷新一次，编码办公点与版本号；扫码后校验归属考勤组与有效期。</li>
+        <li>过期、被其他办公点使用、或不属于本考勤组的二维码 → 拒绝，提示刷新或改用其他方式。</li>
+        <li>连续 3 次扫码无效 → 该员工 10 分钟内禁止继续扫码，可改用定位、人脸或网页 <span class="tag tbd">Assumption, TBD</span>。</li>
+        <li>二维码服务不可用时，HR 可启用临时静态码，有效期不超过 2 小时，启用与停用均写审计。</li>
+      </ul>
+      <p><b>结果：</b>记录办公点、二维码版本与结果；有效卡参与日结果。</p>
+      <p><b>异常：</b>摄像头权限被拒绝 → 引导改用其他方式；二维码截图转发 → 动态码天然失效；办公点停用 → 立即不可扫。</p>
+    </div>
+  </div>
+
+  <div class="fr">
+    <div class="fr-head"><span class="fr-id">FR-05</span><span class="fr-title">人脸识别打卡</span><span class="fr-pri">P0</span></div>
+    <div class="fr-body">
+      <div class="kv"><span><b>前置：</b>员工已录入人脸底片并单独授权；考勤组启用人脸</span><span><b>触发：</b>开始识别</span></div>
+      <p><b>处理规则：</b></p>
+      <ul class="rules">
+        <li>执行活体检测与 1:1 比对；Demo 以动画与结果模拟，正式版接入识别服务 <span class="tag tbd">TBD</span>。</li>
+        <li>比对失败允许重试，连续 3 次失败后当日转人工审核，由 HR 确认后方可补卡，不允许无限重试。</li>
+        <li>仅保存比对结果与分值，不保存现场照片；底片与授权记录分离管理 <span class="tag tbd">Assumption, TBD</span>。</li>
+        <li>人脸不得作为唯一打卡方式：启用脸识别后，考勤组必须保留至少一种非生物识别方式 <span class="tag dec">Decision</span>。</li>
+        <li>员工可随时撤回授权；撤回后停止使用脸识别，底片在 30 日内删除，历史打卡结果不受影响 <span class="tag tbd">Assumption, TBD</span>。</li>
+      </ul>
+      <p><b>结果：</b>有效卡记录识别方式；失败 3 次生成一条「待人工确认」任务，通知 HR 与员工。</p>
+      <p><b>异常：</b>未录入 → 引导联系 HR；设备无摄像头 → 其他方式；识别通过但员工否认 → 员工可申诉，按第 8.3 节合规流程处理。</p>
+    </div>
+  </div>
+
+  <div class="fr">
+    <div class="fr-head"><span class="fr-id">FR-06</span><span class="fr-title">网页手动打卡</span><span class="fr-pri">P0</span></div>
+    <div class="fr-body">
+      <div class="kv"><span><b>适用：</b>办公室 PC 或无摄像头场景</span><span><b>触发：</b>点击网页打卡</span></div>
+      <p><b>处理规则：</b></p>
+      <ul class="rules">
+        <li>必须处于登录态；记录服务器时间、IP、设备指纹与浏览器信息，来源标记为「网页打卡」。</li>
+        <li>考勤组可配置「网页打卡需主管确认」，默认关闭；开启后该卡先记为「待确认」，不参与正常判定，主管确认后转为有效 <span class="tag tbd">Assumption, TBD</span>。</li>
+        <li>同一设备 5 分钟内为 2 名及以上员工打卡 → 生成风控提示给 HR，相关记录标记待核查 <span class="tag tbd">Assumption, TBD</span>。</li>
+        <li>公共电脑使用后提示退出登录；不得保存密码。</li>
+      </ul>
+      <p><b>结果：</b>有效卡，来源与设备可追溯；开启确认时，未确认前日结果标注「待确认」。</p>
+      <p><b>异常：</b>未登录 → 跳转登录；设备时间异常 → 以服务器时间为准；IP 与常用地差异过大 → 仅提示不拒绝（非定位方式）。</p>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-head">
+      <div>
+        <div class="demo-title"><span class="demo-tag">DEMO 1</span>员工打卡</div>
+        <div class="demo-sub">覆盖 FR-02 至 FR-06 · 四种方式均可点击 · 含失败与替代路径</div>
+      </div>
+      <button class="demo-link" type="button" id="punchReset">重置演示</button>
+    </div>
+    <div class="phone">
+      <div class="phone-top"><span>9:41</span><span>5G&nbsp;&nbsp;▮▮▮</span></div>
+      <div class="phone-body">
+        <div class="punch-hero">
+          <div class="date">11月9日 周一 · 演示数据</div>
+          <div class="clock">09:12</div>
+          <div class="shift">总部标准班 09:00–18:00 · 午休 12:00–13:00</div>
+          <div class="status-line" id="punchStatus">未打卡</div>
+        </div>
+
+        <div class="tabs" data-group="punch">
+          <button class="tab active" type="button" data-tab="loc">定位</button>
+          <button class="tab" type="button" data-tab="qr">扫码</button>
+          <button class="tab" type="button" data-tab="face">人脸</button>
+          <button class="tab" type="button" data-tab="web">网页</button>
+        </div>
+        <div class="tab-body">
+          <div class="panel active" data-panel="loc">
+            <div class="map"><div class="fence"></div><div class="pin"></div><div class="map-label">总部 · 围栏半径 200m</div></div>
+            <div class="field" style="margin-top:8px">
+              <label>当前位置（演示选择）</label>
+              <select id="locSelect">
+                <option value="总部工位" data-dist="120">总部工位 · 距办公点 120m</option>
+                <option value="公司前台" data-dist="60">公司前台 · 距办公点 60m</option>
+                <option value="家中" data-dist="2600">家中 · 距办公点 2.6km</option>
+                <option value="客户现场" data-dist="8400">客户现场 · 距办公点 8.4km</option>
+              </select>
+            </div>
+            <div class="check"><input type="checkbox" id="locOutsideApprove"><label for="locOutsideApprove" style="margin:0">已有通过的外勤 / 出差审批（演示）</label></div>
+            <button class="btn" type="button" id="locBtn" style="width:100%">定位打卡</button>
+            <div class="msg" id="locMsg"></div>
+          </div>
+
+          <div class="panel" data-panel="qr">
+            <div class="qr-box">
+              <div class="qr" id="qrGrid"></div>
+              <div class="qr-side">本办公点动态码<b id="qrCount">60s</b>过期后需刷新<br><button class="btn ghost sm" type="button" id="qrRefresh" style="margin-top:4px">刷新二维码</button></div>
+            </div>
+            <div class="check"><input type="checkbox" id="qrWrong"><label for="qrWrong" style="margin:0">模拟扫描其他办公点的二维码</label></div>
+            <button class="btn" type="button" id="qrBtn" style="width:100%">模拟扫码打卡</button>
+            <div class="msg" id="qrMsg"></div>
+          </div>
+
+          <div class="panel" data-panel="face">
+            <div class="face-box">
+              <div class="face-ring" id="faceRing">
+                <svg width="52" height="52" viewBox="0 0 24 24" fill="none" stroke="#2f5bea" stroke-width="1.5" stroke-linecap="round">
+                  <circle cx="12" cy="8.2" r="3.4"></circle>
+                  <path d="M5 20c.6-4 3.3-6.2 7-6.2s6.4 2.2 7 6.2"></path>
+                </svg>
+              </div>
+              <div class="face-side"><b>人脸识别</b>底片状态：已录入<br>比对阈值：80 分<br>Demo 不采集真实人脸</div>
+            </div>
+            <div class="check"><input type="checkbox" id="faceFail"><label for="faceFail" style="margin:0">模拟识别失败（演示异常）</label></div>
+            <button class="btn" type="button" id="faceBtn" style="width:100%">开始识别</button>
+            <div class="msg" id="faceMsg"></div>
+          </div>
+
+          <div class="panel" data-panel="web">
+            <div class="today-list" style="margin-top:0">
+              <div class="today-row"><span>设备</span><b>MacBook Pro · Chrome</b></div>
+              <div class="today-row"><span>IP 地址</span><b>10.12.8.21</b></div>
+              <div class="today-row"><span>服务器时间</span><b>09:12</b></div>
+            </div>
+            <div class="check"><input type="checkbox" id="webConfirm"><label for="webConfirm" style="margin:0">考勤组要求网页打卡需主管确认</label></div>
+            <button class="btn" type="button" id="webBtn" style="width:100%">网页打卡</button>
+            <div class="msg" id="webMsg"></div>
+          </div>
+        </div>
+
+        <div class="today-list">
+          <div class="today-row"><span>上班打卡</span><b id="punchInTime">--:--</b></div>
+          <div class="today-row"><span>上班方式</span><span id="punchInWay">—</span></div>
+          <div class="today-row"><span>下班打卡</span><b id="punchOutTime">--:--</b></div>
+          <div class="today-row"><span>下班方式</span><span id="punchOutWay">—</span></div>
+        </div>
+      </div>
+      <div class="phone-nav"><span class="active">打卡</span><span>考勤</span><span>审批</span><span>我的</span></div>
+    </div>
+    <div class="demo-note">操作建议：先用「总部工位」打卡，观察迟到；再切换到「家中」查看范围外拒绝与外勤入口；扫码 Demo 可等待倒计时结束验证过期；人脸连续失败 3 次触发转人工。</div>
+  </div>
+  <h3>5.3 考勤记录与异常处理</h3>
+
+  <div class="fr">
+    <div class="fr-head"><span class="fr-id">FR-07</span><span class="fr-title">我的考勤记录</span><span class="fr-pri">P0</span></div>
+    <div class="fr-body">
+      <div class="kv"><span><b>角色：</b>员工</span><span><b>触发：</b>进入「考勤」页</span></div>
+      <p><b>目的：</b>让员工在当月内就能核对自己的记录，而不是等到月底被动接受一个结果。</p>
+      <p><b>布局：</b>月历与列表两种视图，默认当前月；月历用颜色区分正常、异常、请假、出差、休息；列表按日期倒序排列。点击任意一天进入详情。</p>
+      <ul class="rules">
+        <li>仅展示本人数据，近 12 个月可查；当月未结算的记录标注「预估」，已结算的标注「已结算」。</li>
+        <li>日详情包含：上下班打卡时间与方式、办公地点、当日关联的请假/出差/加班、异常标签及判定说明、申诉记录与审批意见。</li>
+        <li>记录只读；员工不能直接编辑时间或状态，只能通过申诉或联系 HR 修正。</li>
+        <li>支持导出本人当月记录 CSV；导出内容与页面展示口径一致 <span class="tag tbd">Assumption, TBD</span>。</li>
+        <li>离职员工可查看历史记录，但不可打卡、不可提交新的申诉。</li>
+      </ul>
+      <p><b>异常：</b>当月无记录 → 空状态并给出打卡入口；考勤组变更 → 按日期分别显示适用班次；月报已锁定 → 记录页显示「已锁定」且隐藏申诉入口。</p>
+    </div>
+  </div>
+
+  <div class="fr">
+    <div class="fr-head"><span class="fr-id">FR-08</span><span class="fr-title">异常申诉与补卡</span><span class="fr-pri">P0</span></div>
+    <div class="fr-body">
+      <div class="kv"><span><b>角色：</b>员工（主管可代提）</span><span><b>触发：</b>日结果存在异常标签，或员工自查发现缺卡</span></div>
+      <p><b>处理规则：</b></p>
+      <ul class="rules">
+        <li>可申诉当月及上月未锁定日期的记录；上月截止时间为次月 3 日 23:59 <span class="tag tbd">Assumption, TBD</span>。</li>
+        <li>补卡次数按考勤组配置，默认每月 3 次；达到上限后禁止提交，提示联系 HR。重新提交被驳回的申诉同样计入次数。</li>
+        <li>同一天同一类型只允许存在一条「待审批」申诉；已存在时按钮置灰并显示「审批中」。</li>
+        <li>报表锁定的月份不可提交；需要修改时由 HR 解锁，解锁后员工才可重新申诉。</li>
+        <li>主管可代团队成员提交，记录中标注「代提交」及操作人；HR 也可直接修正，但必须填写原因并写审计。</li>
+        <li>审批通过后日结果立即重算：移除对应异常标签或调整主状态，同时把所属月份报表标记为「待重算」；驳回必须填写理由，员工可补充凭证后重新提交。</li>
+        <li>审批人连续 5 个工作日未处理 → 升级至 HR，并在申请人与审批人两端提醒 <span class="tag tbd">Assumption, TBD</span>。</li>
+      </ul>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>字段</th><th>必填</th><th>规则</th></tr></thead>
+          <tbody>
+            <tr><td>日期</td><td>是</td><td>默认为入口对应的日期；仅可选可申诉月份内的日期</td></tr>
+            <tr><td>类型</td><td>是</td><td>补上班卡 / 补下班卡 / 迟到申诉 / 早退申诉 / 旷工申诉 / 外勤补录</td></tr>
+            <tr><td>补卡时间</td><td>补卡类型必填</td><td>当日 00:00–23:59，且不得晚于当前时间</td></tr>
+            <tr><td>原因</td><td>是</td><td>10–200 字，需说明具体情况</td></tr>
+            <tr><td>凭证</td><td>否</td><td>jpg / png / pdf，单个不超过 5MB；Demo 不真实上传</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <p><b>结果：</b>生成一条待审批申诉；日结果与记录页显示「申诉中」；审批通过后更新日结果与月报状态，并通知员工。</p>
+      <p><b>异常：</b>重复提交 → 拒绝并提示已有待审批；无可用补卡次数 → 禁止提交；凭证格式不支持 → 上传前提示；审批时记录已被 HR 修正 → 申诉自动失效并通知申请人。</p>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-head">
+      <div>
+        <div class="demo-title"><span class="demo-tag">DEMO 2</span>我的考勤与异常申诉</div>
+        <div class="demo-sub">覆盖 FR-07、FR-08 · 点击异常行的「申诉 / 补卡」提交表单</div>
+      </div>
+      <button class="demo-link" type="button" id="attReset">重置演示</button>
+    </div>
+    <div class="desk">
+      <div class="desk-head">
+        <div>
+          <div class="desk-title">我的考勤 · 2026 年 11 月</div>
+          <div class="desk-sub">总部标准班 · 09:00–18:00 · 弹性 0 分钟</div>
+        </div>
+        <span class="chip amber">预估中 · 未结算</span>
+      </div>
+      <div class="stat-grid" style="grid-template-columns:repeat(4,1fr)">
+        <div class="stat"><div class="v">18</div><div class="l">出勤天数</div></div>
+        <div class="stat warn"><div class="v">1</div><div class="l">迟到次数</div></div>
+        <div class="stat red"><div class="v">2</div><div class="l">缺卡次数</div></div>
+        <div class="stat"><div class="v">1</div><div class="l">请假天数</div></div>
+      </div>
+      <div class="filter-row">
+        <button class="filter-btn active" type="button" data-filter="all">全部</button>
+        <button class="filter-btn" type="button" data-filter="abnormal">仅异常</button>
+        <button class="filter-btn" type="button" data-filter="pending">申诉中</button>
+      </div>
+      <table class="rec-table">
+        <thead><tr><th>日期</th><th>上班</th><th>下班</th><th>状态</th><th>操作</th></tr></thead>
+        <tbody id="attRows">
+          <tr data-status="normal">
+            <td>11-06 周五</td><td>09:03</td><td>18:02</td>
+            <td><span class="chip green">正常</span></td>
+            <td><button class="btn ghost sm" type="button" data-view="detail">详情</button></td>
+          </tr>
+          <tr data-status="abnormal">
+            <td>11-05 周四</td><td>09:12</td><td>18:01</td>
+            <td><span class="chip amber">异常 · 迟到 12 分</span></td>
+            <td><button class="appeal-btn btn sm" type="button" data-date="11-05" data-type="迟到申诉">申诉</button></td>
+          </tr>
+          <tr data-status="abnormal">
+            <td>11-04 周三</td><td>—</td><td>18:03</td>
+            <td><span class="chip red">异常 · 上班缺卡</span></td>
+            <td><button class="appeal-btn btn sm" type="button" data-date="11-04" data-type="补上班卡">补卡</button></td>
+          </tr>
+          <tr data-status="leave">
+            <td>11-03 周二</td><td>—</td><td>—</td>
+            <td><span class="chip blue">请假 · 年假</span></td>
+            <td><button class="btn ghost sm" type="button" data-view="detail">详情</button></td>
+          </tr>
+          <tr data-status="normal">
+            <td>11-02 周一</td><td>08:56</td><td>18:10</td>
+            <td><span class="chip green">正常</span></td>
+            <td><button class="btn ghost sm" type="button" data-view="detail">详情</button></td>
+          </tr>
+          <tr data-status="abnormal">
+            <td>10-31 周五</td><td>09:01</td><td>—</td>
+            <td><span class="chip red">异常 · 下班缺卡</span></td>
+            <td><button class="appeal-btn btn sm" type="button" data-date="10-31" data-type="补下班卡">补卡</button></td>
+          </tr>
+        </tbody>
+      </table>
+    </div>
+    <div class="demo-note">提交后该行状态变为「申诉中」，并进入 Demo 3 的待审批列表。表单校验：原因少于 10 个字会被拒绝；实际 Demo 不上传文件。</div>
+  </div>
+  <h3>5.4 申请与审批</h3>
+
+  <div class="fr">
+    <div class="fr-head"><span class="fr-id">FR-09</span><span class="fr-title">请假申请</span><span class="fr-pri">P0</span></div>
+    <div class="fr-body">
+      <div class="kv"><span><b>角色：</b>员工</span><span><b>审批：</b>直属主管</span></div>
+      <p><b>类型：</b>年假、事假、病假、调休、婚假、产假 / 陪产假、丧假 <span class="tag tbd">Assumption, TBD</span>。病假需上传证明 <span class="tag tbd">Assumption, TBD</span>。</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>字段</th><th>必填</th><th>规则</th></tr></thead>
+          <tbody>
+            <tr><td>假期类型</td><td>是</td><td>按公司假期类型单选</td></tr>
+            <tr><td>开始 / 结束时间</td><td>是</td><td>精确到天与上午/下午；开始不得晚于结束</td></tr>
+            <tr><td>时长</td><td>自动</td><td>按 0.5 天粒度自动计算，不允许手工覆盖</td></tr>
+            <tr><td>事由</td><td>是</td><td>10–200 字</td></tr>
+            <tr><td>附件</td><td>病假必填</td><td>jpg / png / pdf，≤5MB</td></tr>
+            <tr><td>交接人</td><td>否</td><td>仅记录，不参与审批流转</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul class="rules">
+        <li>与已有申请或出差时段重叠时禁止提交，并展示重叠的具体日期。</li>
+        <li>年假余额由 HR 导入，Demo 使用示例数据；余额不足时阻止提交，调休余额为 0 时同样阻止 <span class="tag tbd">Assumption, TBD</span>。</li>
+        <li>最小 0.5 天、单次最长 30 天；超过上限需走 HR 线下流程 <span class="tag tbd">Assumption, TBD</span>。</li>
+        <li>审批通过后，请假时段覆盖的应打卡时段不再计缺卡，日结果主状态或标签变为「请假」。</li>
+        <li>已通过的请假不能由员工撤回；需要撤销时由 HR 操作并写审计。</li>
+      </ul>
+      <p><b>结果：</b>申请进入待审批；通过后扣减对应余额、更新日结果并通知申请人。</p>
+      <p><b>异常：</b>审批期间时段已过 → 仍可审批，通过后追溯覆盖；审批通过后余额被其他申请占满 → 不自动驳回，提示 HR 人工处理。</p>
+    </div>
+  </div>
+
+  <div class="fr">
+    <div class="fr-head"><span class="fr-id">FR-10</span><span class="fr-title">加班申请</span><span class="fr-pri">P0</span></div>
+    <div class="fr-body">
+      <div class="kv"><span><b>角色：</b>员工</span><span><b>审批：</b>直属主管</span></div>
+      <p><b>类型：</b>工作日加班、休息日加班、法定节假日加班。</p>
+      <ul class="rules">
+        <li>填写日期、开始/结束时间与事由；时长按 30 分钟向下取整自动计算。</li>
+        <li><b>加班时长以审批通过的申请为准，不根据打卡时长自动推算</b> <span class="tag dec">Decision</span>。打卡只作为到岗证明，休息日加班要求当天至少一次有效打卡 <span class="tag tbd">Assumption, TBD</span>。</li>
+        <li>同一时段不可重复申请；与请假时段重叠时禁止提交。</li>
+        <li>已通过的加班需修改时，由 HR 撤销原申请后重新提交，不直接编辑。</li>
+        <li>加班不改变当天出勤主状态，只进入月度统计。</li>
+      </ul>
+      <p><b>结果：</b>通过后计入月报「加班时长」；通知申请人。</p>
+      <p><b>异常：</b>结束时间早于开始时间 → 阻止提交；跨天加班 → 本期按两段分别申请 <span class="tag tbd">Assumption, TBD</span>；审批通过但无打卡 → 月报标注「缺到岗记录」供 HR 核对。</p>
+    </div>
+  </div>
+
+  <div class="fr">
+    <div class="fr-head"><span class="fr-id">FR-11</span><span class="fr-title">出差 / 外勤申请</span><span class="fr-pri">P0</span></div>
+    <div class="fr-body">
+      <div class="kv"><span><b>角色：</b>员工</span><span><b>审批：</b>直属主管</span></div>
+      <p><b>用途：</b>覆盖异地办公与客户现场。出差可跨多日，外勤通常为当天短时外出。</p>
+      <ul class="rules">
+        <li>字段：类型（出差/外勤）、开始/结束时间、地点、事由、关联客户或项目（可选）。</li>
+        <li>审批通过后，覆盖时段不再要求常规打卡；考勤组可配置出差期间是否仍需打卡，默认仍需打卡并标记「出差」<span class="tag tbd">Assumption, TBD</span>。</li>
+        <li>定位打卡在范围外时，必须存在覆盖当前时段的外勤/出差审批才允许打卡，否则拒绝。</li>
+        <li>外勤申请与打卡记录双向可查：申请详情能看到关联打卡，打卡详情能看到关联审批。</li>
+      </ul>
+      <p><b>结果：</b>日结果主状态为「出差」或标记「外勤」；月报统计出差天数。</p>
+      <p><b>异常：</b>时段与请假重叠 → 禁止提交；审批未通过但员工已在范围外 → 打卡被拒绝并引导先提交申请。</p>
+    </div>
+  </div>
+
+  <div class="fr">
+    <div class="fr-head"><span class="fr-id">FR-12</span><span class="fr-title">审批中心</span><span class="fr-pri">P0</span></div>
+    <div class="fr-body">
+      <div class="kv"><span><b>角色：</b>直属主管 / HR</span><span><b>触发：</b>点击审批入口或通知</span></div>
+      <p><b>布局：</b>三个页签——待我审批、我发起的、已处理。待办按提交时间升序，最早的在最上方；每条展示申请人、类型、时段、时长、事由、凭证与考勤冲突提示。</p>
+      <ul class="rules">
+        <li>单个通过或驳回；驳回必须填写理由，理由回传给申请人。</li>
+        <li>审批前展示冲突提示：该时段已有打卡、已有其他审批、或与请假重叠。冲突不阻止审批，但要求审批人确认 <span class="tag dec">Decision</span>。</li>
+        <li>不得审批本人申请；命中时自动转交 HR。主管离职或缺位时，其待办自动转交 HR。</li>
+        <li>申请人撤回后，待办置灰并显示「已撤回」，不可再操作；重复点击通过/驳回按幂等处理，只生效一次。</li>
+        <li>批量通过仅适用于无冲突的请假与加班，本期列为 P1；补卡与申诉必须逐条处理 <span class="tag dec">Decision</span>。</li>
+        <li>处理结果实时通知申请人；审批操作与理由写入审计。</li>
+      </ul>
+      <p><b>结果：</b>申请状态变更；关联日结果重算；待办数量减少。</p>
+      <p><b>异常：</b>申请时段已过且未审批 → 通过后仍追溯生效，驳回则申请失效；审批瞬间申请被撤回 → 提示「已撤回」并刷新列表；网络失败 → 提示重试，不得出现重复审批。</p>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-head">
+      <div>
+        <div class="demo-title"><span class="demo-tag">DEMO 3</span>主管审批中心</div>
+        <div class="demo-sub">覆盖 FR-09 至 FR-12 · 通过或驳回，观察待办数量与冲突提示</div>
+      </div>
+      <button class="demo-link" type="button" id="apprReset">重置演示</button>
+    </div>
+    <div class="desk">
+      <div class="desk-head">
+        <div>
+          <div class="desk-title">审批中心</div>
+          <div class="desk-sub">当前角色：直属主管 · 研发部</div>
+        </div>
+        <span class="chip blue">待审批 <b id="apprCount">3</b> 条</span>
+      </div>
+      <div class="tabs" data-group="appr">
+        <button class="tab active" type="button" data-tab="todo">待我审批</button>
+        <button class="tab" type="button" data-tab="mine">我发起的</button>
+        <button class="tab" type="button" data-tab="done">已处理</button>
+      </div>
+      <div class="tab-body">
+        <div class="panel active" data-panel="todo">
+          <div id="apprList">
+            <div class="appr-card" data-id="a1" data-type="请假">
+              <div class="appr-top">
+                <div><div class="appr-name">陈璐 · 研发部</div><div class="appr-meta">请假 · 年假 1 天 · 11-11 至 11-11</div></div>
+                <span class="chip green">无冲突</span>
+              </div>
+              <div class="appr-reason">事由：家中有事，需请假一天，工作已与同组同事交接。</div>
+              <div class="appr-foot">
+                <span class="appr-meta">提交于 11-07 09:20</span>
+                <span><button class="btn sm approve-btn" type="button" data-result="已通过">通过</button>
+                <button class="btn ghost sm reject-btn" type="button">驳回</button></span>
+              </div>
+            </div>
+            <div class="appr-card" data-id="a2" data-type="补卡">
+              <div class="appr-top">
+                <div><div class="appr-name">周凯 · 研发部</div><div class="appr-meta">补卡 · 11-04 上班卡 · 09:00</div></div>
+                <span class="chip amber">当日已有下班卡 18:03</span>
+              </div>
+              <div class="appr-reason">事由：11-04 上午在客户现场直接开会，未到公司打卡，申请补上班卡。</div>
+              <div class="appr-foot">
+                <span class="appr-meta">提交于 11-06 18:42 · 本月第 1 次补卡</span>
+                <span><button class="btn sm approve-btn" type="button" data-result="已通过">通过</button>
+                <button class="btn ghost sm reject-btn" type="button">驳回</button></span>
+              </div>
+            </div>
+            <div class="appr-card" data-id="a3" data-type="加班">
+              <div class="appr-top">
+                <div><div class="appr-name">林晓 · 研发部</div><div class="appr-meta">加班 · 工作日 11-06 19:00–21:30 · 2.5 小时</div></div>
+                <span class="chip green">无冲突</span>
+              </div>
+              <div class="appr-reason">事由：版本发布支持，需在晚间完成上线与回归验证。</div>
+              <div class="appr-foot">
+                <span class="appr-meta">提交于 11-06 16:05</span>
+                <span><button class="btn sm approve-btn" type="button" data-result="已通过">通过</button>
+                <button class="btn ghost sm reject-btn" type="button">驳回</button></span>
+              </div>
+            </div>
+          </div>
+          <div class="appr-empty" id="apprEmpty" style="display:none">待办已全部处理</div>
+        </div>
+        <div class="panel" data-panel="mine">
+          <div class="appr-card">
+            <div class="appr-top"><div class="appr-name">我的请假 · 年假 0.5 天</div><span class="chip amber">审批中</span></div>
+            <div class="appr-reason">11-14 下午 · 事由：办理个人事务。</div>
+          </div>
+          <div class="appr-card">
+            <div class="appr-top"><div class="appr-name">我的加班 · 工作日 2 小时</div><span class="chip green">已通过</span></div>
+            <div class="appr-reason">11-05 19:00–21:00 · 事由：联调第三方接口。</div>
+          </div>
+        </div>
+        <div class="panel" data-panel="done">
+          <div id="doneList"></div>
+          <div class="appr-empty" id="doneEmpty">暂无已处理记录</div>
+        </div>
+      </div>
+    </div>
+    <div class="demo-note">驳回必须填写理由；处理后的条目会从待办移除并进入「已处理」。Demo 中的冲突提示只做展示，不阻止审批，与 FR-12 一致。</div>
+  </div>
+  <h3>5.5 管理配置</h3>
+
+  <div class="fr">
+    <div class="fr-head"><span class="fr-id">FR-13</span><span class="fr-title">考勤组与规则</span><span class="fr-pri">P0</span></div>
+    <div class="fr-body">
+      <div class="kv"><span><b>角色：</b>HR 考勤管理员</span><span><b>触发：</b>新建或编辑考勤组</span></div>
+      <p><b>目的：</b>把同一批人的班次、打卡方式与容错规则定义在一个可追溯的版本里，员工不用理解规则，只需按页面提示操作。</p>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>字段</th><th>取值 / 范围</th><th>必填</th><th>规则</th></tr></thead>
+          <tbody>
+            <tr><td>考勤组名称</td><td>文本，≤20 字</td><td>是</td><td>全公司唯一</td></tr>
+            <tr><td>适用范围</td><td>部门或指定员工</td><td>是</td><td>一名员工同一时间只能属于一个组</td></tr>
+            <tr><td>上班 / 下班时间</td><td>00:00–23:59</td><td>是</td><td>下班必须晚于上班；不支持跨天班次</td></tr>
+            <tr><td>午休时段</td><td>开始 / 结束</td><td>否</td><td>仅用于工时展示，不计入异常判定 <span class="tag tbd">Assumption, TBD</span></td></tr>
+            <tr><td>工作日</td><td>周一至周日多选</td><td>是</td><td>至少选择一天</td></tr>
+            <tr><td>弹性分钟</td><td>0–60，默认 0</td><td>是</td><td>同时影响迟到与早退判定</td></tr>
+            <tr><td>打卡方式</td><td>定位 / 扫码 / 人脸 / 网页多选</td><td>是</td><td>至少一种；启用脸识别时必须保留一种非生物识别方式</td></tr>
+            <tr><td>定位半径</td><td>100–1000 米，默认 200</td><td>启用定位时必填</td><td>按办公地点分别设置</td></tr>
+            <tr><td>补卡上限</td><td>0–10 次 / 月，默认 3</td><td>是</td><td>0 表示不允许补卡</td></tr>
+            <tr><td>网页打卡需确认</td><td>是 / 否，默认否</td><td>是</td><td>开启后网页卡先进入待确认</td></tr>
+            <tr><td>生效日期</td><td>日期</td><td>是</td><td>只能为今天或未来；不追溯已结算数据</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul class="rules">
+        <li>保存时校验时间关系、半径范围、至少一种打卡方式与工作日；任一不通过则整体不保存。</li>
+        <li><b>规则修改只对生效日期之后的日子生效，不重算已结算数据</b> <span class="tag dec">Decision</span>。需要修正历史时必须通过解锁月报与审计流程。</li>
+        <li>保存前二次确认，展示「影响人数」与「生效日期」；保存后写入审计并生成新版本号。</li>
+        <li>删除考勤组前必须先转移组内全部员工；存在未结算数据时禁止删除。</li>
+      </ul>
+      <p><b>结果：</b>新规则按生效日期应用；员工打卡页的班次、方式与容错口径同步更新。</p>
+      <p><b>异常：</b>同一员工被两个组同时覆盖 → 阻止保存并列出冲突名单；时间冲突或半径越界 → 字段级报错；生效日期早于今天 → 拒绝。</p>
+    </div>
+  </div>
+
+  <div class="fr">
+    <div class="fr-head"><span class="fr-id">FR-14</span><span class="fr-title">办公地点与打卡凭证</span><span class="fr-pri">P0</span></div>
+    <div class="fr-body">
+      <div class="kv"><span><b>角色：</b>HR 考勤管理员</span><span><b>对象：</b>办公地点、动态二维码、人脸底片</span></div>
+      <ul class="rules">
+        <li><b>办公地点：</b>维护名称、地址、经纬度、半径与关联考勤组；停用后该点立即不可打卡，历史记录保留。</li>
+        <li><b>动态二维码：</b>每个办公点一组，每 60 秒刷新；重新生成后旧码在 90 秒内失效；仅 HR 可操作，终端需绑定设备 <span class="tag tbd">Assumption, TBD</span>。</li>
+        <li><b>临时静态码：</b>仅二维码服务不可用时启用，有效期不超过 2 小时，到期自动失效并通知 HR。</li>
+        <li><b>人脸底片：</b>HR 发起录入，员工本人现场确认授权；状态为未录入、已录入、已停用。删除或停用需 HR 操作并写审计。</li>
+        <li>地点或凭证变更前展示影响范围（关联考勤组与人数）；有员工正在进行中的打卡不阻断变更，但需要在变更记录中标注。</li>
+      </ul>
+      <p><b>结果：</b>地点与凭证状态即时生效；所有变更可在审计中按时间与操作人追溯。</p>
+      <p><b>异常：</b>经纬度缺失 → 不允许启用定位；二维码终端离线超过 5 分钟 → 提示 HR 检查；员工撤回人脸授权 → 底片停用并进入 30 日删除队列。</p>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-head">
+      <div>
+        <div class="demo-title"><span class="demo-tag">DEMO 4</span>考勤组规则配置</div>
+        <div class="demo-sub">覆盖 FR-13 · 修改后保存，观察校验、生效说明与审计记录</div>
+      </div>
+      <button class="demo-link" type="button" id="ruleReset">重置演示</button>
+    </div>
+    <div class="desk">
+      <div class="desk-head">
+        <div>
+          <div class="desk-title">编辑考勤组 · 总部标准班</div>
+          <div class="desk-sub">当前版本 v1.3 · 影响 86 人</div>
+        </div>
+        <span class="chip green">生效中</span>
+      </div>
+      <div class="rule-grid">
+        <div class="field full"><label>考勤组名称</label><input id="ruleName" value="总部标准班"></div>
+        <div class="field"><label>上班时间</label><input id="shiftStart" type="time" value="09:00"></div>
+        <div class="field"><label>下班时间</label><input id="shiftEnd" type="time" value="18:00"></div>
+        <div class="field"><label>弹性分钟（0–60）</label><input id="flexMin" type="number" value="0" min="0" max="60"></div>
+        <div class="field"><label>补卡上限（次 / 月）</label><input id="makeupLimit" type="number" value="3" min="0" max="10"></div>
+        <div class="field full"><label>定位半径（米）</label><input id="radius" type="number" value="200" min="100" max="1000"></div>
+        <div class="field full">
+          <label>打卡方式（至少一种；人脸不可唯一）</label>
+          <div class="check"><input type="checkbox" id="methodLoc" checked><label for="methodLoc" style="margin:0">定位打卡</label></div>
+          <div class="check"><input type="checkbox" id="methodQr" checked><label for="methodQr" style="margin:0">扫码打卡</label></div>
+          <div class="check"><input type="checkbox" id="methodFace" checked><label for="methodFace" style="margin:0">人脸识别</label></div>
+          <div class="check"><input type="checkbox" id="methodWeb" checked><label for="methodWeb" style="margin:0">网页打卡</label></div>
+        </div>
+        <div class="field full"><label>生效日期</label><input id="effectiveDate" type="date" value="2026-11-10"></div>
+      </div>
+      <div class="btn-row">
+        <button class="btn" type="button" id="ruleSave">保存并生效</button>
+        <button class="btn ghost" type="button" id="ruleCancel">取消</button>
+      </div>
+      <div class="msg" id="ruleMsg"></div>
+      <div style="border-top:1px solid var(--line2);margin-top:10px;padding-top:8px">
+        <div class="appr-meta" style="font-weight:600;color:#475467">变更审计</div>
+        <ul class="audit-list" id="auditList">
+          <li>11-07 09:10 · HR 王敏 · 修改弹性分钟 0 → 15 → 0 · 保存后 10 分钟撤回，原因：配置误操作</li>
+        </ul>
+      </div>
+    </div>
+    <div class="demo-note">保存时校验：下班时间必须晚于上班，弹性 0–60，半径 100–1000，至少选择一种打卡方式；保存成功会追加一条审计记录。</div>
+  </div>
+  <h3>5.6 看板与报表</h3>
+
+  <div class="fr">
+    <div class="fr-head"><span class="fr-id">FR-15</span><span class="fr-title">实时考勤看板</span><span class="fr-pri">P0</span></div>
+    <div class="fr-body">
+      <div class="kv"><span><b>角色：</b>HR / 主管</span><span><b>触发：</b>进入看板</span></div>
+      <p><b>内容：</b>今日应出勤、已打卡、未打卡、迟到、缺卡、请假、出差、待审批；下方按部门展示出勤率与异常人数。</p>
+      <ul class="rules">
+        <li>数据每分钟刷新一次 <span class="tag tbd">Assumption, TBD</span>；页面显示最后更新时间。</li>
+        <li>口径：未打卡 = 应出勤 − 已打卡 − 请假 − 出差；迟到与缺卡按已结算或当前实时状态统计，页面注明「实时，未结算」。</li>
+        <li>主管仅能看到直属团队，HR 能看到全公司；下钻名单同样受权限约束。</li>
+        <li>点击任一数字下钻到员工名单，可继续进入个人当日详情；点击异常数量默认按异常类型分组。</li>
+        <li>支持导出当日快照 CSV，导出内容附生成时间与操作人。</li>
+      </ul>
+      <p><b>结果：</b>HR 能在早上快速定位未打卡与异常集中的部门；主管能看到团队待处理事项。</p>
+      <p><b>异常：</b>非工作日 → 展示「今日休息」并隐藏出勤指标；无数据 → 显示空状态而非 0；数据刷新失败 → 保留上次数据并标注时间。</p>
+    </div>
+  </div>
+
+  <div class="fr">
+    <div class="fr-head"><span class="fr-id">FR-16</span><span class="fr-title">月度考勤报表</span><span class="fr-pri">P0</span></div>
+    <div class="fr-body">
+      <div class="kv"><span><b>角色：</b>HR</span><span><b>触发：</b>每月 1 日自动生成，或手动重新生成</span></div>
+      <p><b>列：</b>员工、部门、应出勤天数、实出勤天数、迟到次数、早退次数、缺卡次数、旷工天数、请假天数、加班时长、出差天数、未结异常数。</p>
+      <ul class="rules">
+        <li>按结算时适用的规则版本计算，报表记录版本号；规则后续变更不回溯已生成报表。</li>
+        <li>存在待审批的申诉或申请时，对应格子标注「未结」；锁定前 HR 必须逐条处理或显式确认豁免，豁免需填原因。</li>
+        <li><b>锁定后报表不可修改</b>；需要修改时 HR 解锁 → 重算 → 版本号 +1 → 重新锁定，全程写审计 <span class="tag dec">Decision</span>。</li>
+        <li>支持导出 CSV / Excel；导出文件名包含月份与版本号，导出行为写审计。</li>
+        <li>生成失败时通知 HR，可手动重试；重试不改变已确认的锁定状态。</li>
+      </ul>
+      <p><b>结果：</b>HR 获得可归档的月度结果；员工申诉通过后，所属月份自动标记「待重算」。</p>
+      <p><b>异常：</b>跨月申诉 → 解锁重算并生成新版本；员工月中离职 → 按实际在职日期计算应出勤；考勤组中途变更 → 按日期分段统计，报表附口径说明。</p>
+    </div>
+  </div>
+
+  <div class="demo">
+    <div class="demo-head">
+      <div>
+        <div class="demo-title"><span class="demo-tag">DEMO 5</span>HR 看板与月度报表</div>
+        <div class="demo-sub">覆盖 FR-15、FR-16 · 切换日报/月报，锁定与导出均可点击</div>
+      </div>
+      <button class="demo-link" type="button" id="adminReset">重置演示</button>
+    </div>
+    <div class="desk">
+      <div class="desk-head">
+        <div>
+          <div class="desk-title">考勤管理台</div>
+          <div class="desk-sub">角色：HR 考勤管理员 · 数据每小时同步，页面每分钟刷新</div>
+        </div>
+        <span class="chip gray">最后更新 10:24</span>
+      </div>
+      <div class="tabs" data-group="admin">
+        <button class="tab active" type="button" data-tab="daily">今日看板</button>
+        <button class="tab" type="button" data-tab="month">11 月月报</button>
+      </div>
+      <div class="tab-body">
+        <div class="panel active" data-panel="daily">
+          <div class="stat-grid">
+            <div class="stat"><div class="v">100</div><div class="l">应出勤</div></div>
+            <div class="stat green"><div class="v">94</div><div class="l">已打卡</div></div>
+            <div class="stat red"><div class="v">3</div><div class="l">未打卡</div></div>
+            <div class="stat warn"><div class="v">5</div><div class="l">迟到</div></div>
+            <div class="stat"><div class="v">7</div><div class="l">待审批</div></div>
+          </div>
+          <div class="appr-meta" style="margin-bottom:4px">部门出勤率（今日 10:24）</div>
+          <div class="bar-row"><span>研发部</span><span class="bar-track"><span class="bar-fill" style="width:96%"></span></span><span class="bar-val">96%</span></div>
+          <div class="bar-row"><span>产品部</span><span class="bar-track"><span class="bar-fill" style="width:92%"></span></span><span class="bar-val">92%</span></div>
+          <div class="bar-row"><span>市场部</span><span class="bar-track"><span class="bar-fill" style="width:88%"></span></span><span class="bar-val">88%</span></div>
+          <div class="bar-row"><span>职能部</span><span class="bar-track"><span class="bar-fill" style="width:100%"></span></span><span class="bar-val">100%</span></div>
+          <div style="margin-top:10px;display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap">
+            <span class="appr-meta">异常明细：迟到 5 人 · 缺卡 3 人 · 待审批 7 条</span>
+            <button class="btn ghost sm" type="button" id="exportDaily">导出当日快照</button>
+          </div>
+        </div>
+        <div class="panel" data-panel="month">
+          <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;margin-bottom:8px">
+            <div>
+              <div class="desk-title" style="font-size:12px">2026 年 11 月 · 已生成</div>
+              <div class="desk-sub">未结异常 2 条 · 版本 v3</div>
+            </div>
+            <span class="chip amber" id="reportStatus">已生成 · 未锁定</span>
+          </div>
+          <table class="rec-table">
+            <thead><tr><th>员工</th><th>应出勤</th><th>实出勤</th><th>迟到</th><th>缺卡</th><th>请假</th><th>加班</th><th>未结</th></tr></thead>
+            <tbody>
+              <tr><td>陈璐</td><td>20</td><td>19</td><td>1</td><td>0</td><td>1</td><td>4.5h</td><td><span class="chip amber">1</span></td></tr>
+              <tr><td>周凯</td><td>20</td><td>18</td><td>0</td><td>2</td><td>0</td><td>2.0h</td><td><span class="chip amber">1</span></td></tr>
+              <tr><td>林晓</td><td>20</td><td>20</td><td>0</td><td>0</td><td>0</td><td>6.0h</td><td><span class="chip green">0</span></td></tr>
+            </tbody>
+          </table>
+          <div class="btn-row" style="justify-content:flex-end">
+            <button class="btn ghost sm" type="button" id="exportMonthly">导出月度 CSV</button>
+            <button class="btn sm" type="button" id="lockBtn">锁定月报</button>
+          </div>
+          <div class="msg info" id="lockMsg" style="margin-top:6px">锁定前需处理 2 条未结异常，或由 HR 确认豁免。</div>
+        </div>
+      </div>
+    </div>
+    <div class="demo-note">月报 Demo 中直接点击锁定会提示未结异常；再次点击可解锁。真实流程要求先处理未结项或填写豁免原因。</div>
+  </div>
+
+  <h3>5.7 通知与审计</h3>
+
+  <div class="fr">
+    <div class="fr-head"><span class="fr-id">FR-17</span><span class="fr-title">通知与提醒</span><span class="fr-pri">P0</span></div>
+    <div class="fr-body">
+      <div class="kv"><span><b>渠道：</b>站内通知（Demo）· 邮件 / IM 为 P1</span><span><b>角色：</b>全部</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>事件</th><th>接收人</th><th>时机</th><th>可关闭</th></tr></thead>
+          <tbody>
+            <tr><td>上班打卡提醒</td><td>员工</td><td>上班前 30 分钟</td><td>是</td></tr>
+            <tr><td>缺卡 / 异常提醒</td><td>员工、直属主管</td><td>次日 10:00，仅对存在异常标签的日期</td><td>否</td></tr>
+            <tr><td>申请 / 申诉提交</td><td>直属主管</td><td>提交即时</td><td>否</td></tr>
+            <tr><td>审批结果</td><td>申请人</td><td>审批即时</td><td>否</td></tr>
+            <tr><td>人脸失败转人工</td><td>HR、员工</td><td>连续失败 3 次即时</td><td>否</td></tr>
+            <tr><td>审批超时</td><td>审批人（72 小时）、HR（5 个工作日）</td><td>按阈值触发</td><td>否</td></tr>
+            <tr><td>月报生成 / 锁定</td><td>HR</td><td>每月 1 日 09:00 或操作即时</td><td>否</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul class="rules">
+        <li>通知内含跳转链接，点击直达对应记录或审批条目；已被处理的通知标记「已处理」。</li>
+        <li>审批类通知不可关闭；仅「上班提醒」允许员工自行关闭。</li>
+        <li>发送失败重试 3 次，仍失败则记录失败原因供 HR 查询 <span class="tag tbd">Assumption, TBD</span>。</li>
+      </ul>
+      <p><b>异常：</b>同一事件 24 小时内不重复推送相同内容；通知发送时记录已删除 → 链接进入列表页并提示记录不存在。</p>
+    </div>
+  </div>
+
+  <div class="fr">
+    <div class="fr-head"><span class="fr-id">FR-18</span><span class="fr-title">操作审计</span><span class="fr-pri">P0</span></div>
+    <div class="fr-body">
+      <div class="kv"><span><b>角色：</b>HR 查看；全员产生</span><span><b>触发：</b>关键操作发生时自动写入</span></div>
+      <div class="table-wrap">
+        <table>
+          <thead><tr><th>记录事件</th><th>记录内容</th></tr></thead>
+          <tbody>
+            <tr><td>规则 / 考勤组变更</td><td>操作人、时间、版本号、字段前后值、生效日期、原因</td></tr>
+            <tr><td>办公地点 / 二维码 / 人脸底片变更</td><td>对象、动作（新增/停用/删除/重新生成）、影响人数</td></tr>
+            <tr><td>手工修正考勤记录</td><td>员工、日期、原状态与新状态、原因、操作人</td></tr>
+            <tr><td>审批与申诉处理</td><td>申请编号、动作、理由、操作人、时间</td></tr>
+            <tr><td>月报生成 / 锁定 / 解锁 / 导出</td><td>月份、版本号、动作、操作人、导出范围</td></tr>
+          </tbody>
+        </table>
+      </div>
+      <ul class="rules">
+        <li>审计日志<b>只追加、不可编辑或删除</b>，保留 24 个月 <span class="tag tbd">Assumption, TBD</span>。</li>
+        <li>HR 可按时间、操作人、对象类型筛选并导出；导出行为本身也写审计。</li>
+        <li>员工可在个人记录详情中看到与自己相关的修正记录（时间、原因、操作人），不展示其他员工数据 <span class="tag tbd">Assumption, TBD</span>。</li>
+      </ul>
+      <p><b>异常：</b>审计写入失败 → 阻断该业务操作并提示重试，不允许「操作成功但无记录」。</p>
+    </div>
+  </div>
+</section>
+
+<section id="s6">
+  <div class="sec-head"><span class="num">06</span><h2>共享规则</h2></div>
+  <p class="lead-p">本节是唯一口径。功能段提到的迟到、缺卡、加班、重算等，均以此处定义为准；修改规则时必须同步检查所有引用它的模块。</p>
+
+  <h3>6.1 计算口径</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>项目</th><th>计算方式</th><th>边界说明</th></tr></thead>
+      <tbody>
+        <tr><td>应出勤日</td><td>考勤组工作日 − 法定节假日 + 调休上班日</td><td>节假日与调休由 HR 维护的公司日历决定</td></tr>
+        <tr><td>有效打卡窗口</td><td>上班前 120 分钟 至 下班后 240 分钟</td><td>窗口外的打卡请求直接拒绝，不生成无效卡</td></tr>
+        <tr><td>上班 / 下班取卡</td><td>上班取当日最早有效卡，下班取当日最晚有效卡</td><td>同一分钟重复卡只保留一条</td></tr>
+        <tr><td>迟到</td><td>上班卡时间 &gt; 上班时间 + 弹性分钟</td><td>迟到分钟数 = 上班卡 −（上班时间 + 弹性）</td></tr>
+        <tr><td>早退</td><td>下班卡时间 &lt; 下班时间 − 弹性分钟</td><td>早退分钟数 =（下班时间 − 弹性）− 下班卡</td></tr>
+        <tr><td>上班 / 下班缺卡</td><td>应出勤日缺少对应有效卡，且无覆盖该半天的审批</td><td>请假、出差覆盖后不再计缺卡</td></tr>
+        <tr><td>旷工</td><td>全天无有效卡且无审批；或仅一次卡且另一半天无审批</td><td>单次缺卡按 0.5 天旷工计入月报 <span class="tag tbd">Assumption, TBD</span></td></tr>
+        <tr><td>请假时长</td><td>按审批通过的时段计算，最小 0.5 天</td><td>不按打卡推算；余额不足不自动通过</td></tr>
+        <tr><td>加班时长</td><td>审批通过的加班时段，按 30 分钟向下取整</td><td>不根据打卡时长自动计算</td></tr>
+        <tr><td>工时</td><td>下班卡 − 上班卡 − 午休时长</td><td>仅展示，不参与异常判定与薪资 <span class="tag tbd">Assumption, TBD</span></td></tr>
+        <tr><td>月度汇总</td><td>迟到次数、早退次数、缺卡次数、旷工天数、请假天数、加班时长、出差天数</td><td>只统计已结算日结果；未结项单独列出</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>6.2 打卡有效性与防作弊</h3>
+  <ul>
+    <li><b>时间可信：</b>服务器时间是唯一判定依据；客户端时间、设备时间不参与任何计算。</li>
+    <li><b>幂等：</b>同一员工 30 秒内相同方式的重复请求只生成一条记录；不同方式在 30 秒内连续打卡，保留最早一条作为该方向的卡，其余标记「重复」不参与计算。</li>
+    <li><b>失败留痕：</b>校验失败的请求不生成有效卡，但保留失败原因（范围外、过期、识别失败），用于员工申诉与 HR 排查。</li>
+    <li><b>组合校验：</b>定位提供空间证据，扫码提供办公点在场证据，人脸提供身份证据，网页提供设备证据。人脸不得单独作为唯一方式。</li>
+    <li><b>风控提示：</b>同一设备短时间为多人打卡、IP 与常用地差异大、连续扫码失败等只提示 HR，不自动判定作弊；最终处理由 HR 核实并写审计 <span class="tag tbd">Assumption, TBD</span>。</li>
+  </ul>
+
+  <h3>6.3 跨模块联动</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>变化</th><th>联动结果</th></tr></thead>
+      <tbody>
+        <tr><td>请假审批通过</td><td>覆盖时段不再计缺卡；日结果增加「请假」标记；月报请假天数增加</td></tr>
+        <tr><td>出差 / 外勤审批通过</td><td>覆盖时段按配置免打卡或允许范围外打卡；日结果标记出差 / 外勤</td></tr>
+        <tr><td>加班审批通过</td><td>只影响月报加班时长，不改变出勤主状态</td></tr>
+        <tr><td>申诉通过</td><td>日结果立即重算；所属月份标记「待重算」；写审计并通知员工</td></tr>
+        <tr><td>规则变更</td><td>仅对生效日期之后生效；已结算数据与已生成报表不变</td></tr>
+        <tr><td>月报锁定</td><td>该月所有记录不可申诉、不可修正；需 HR 解锁后才能重算</td></tr>
+        <tr><td>员工离职</td><td>次日起禁止打卡与提交新申请；未结审批由 HR 处理；历史记录与报表保留</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>6.4 数据与合规</h3>
+  <ul>
+    <li><b>定位：</b>仅在员工主动打卡时获取一次位置，不后台持续定位，不记录行动轨迹。</li>
+    <li><b>人脸：</b>属于敏感个人信息。录入前单独告知并取得同意，员工可随时撤回；撤回后 30 日内删除底片；未授权不得影响其正常打卡 <span class="tag tbd">Assumption, TBD</span>。本 Demo 只模拟流程，不采集真实人脸。</li>
+    <li><b>最小化：</b>网页打卡只记录判定与追溯所必需的设备信息，不采集通讯录、剪贴板等无关数据。</li>
+    <li><b>保留期限：</b>打卡与审批记录 24 个月；审计日志 24 个月；月度报表 36 个月；人脸底片在职期间保存、离职或撤回后 30 日内删除 <span class="tag tbd">Assumption, TBD</span>。</li>
+    <li><b>员工权利：</b>员工可查看本人打卡、审批与修正记录；可撤回人脸授权；可对异常结果发起申诉。</li>
+  </ul>
+</section>
+
+<section id="s7">
+  <div class="sec-head"><span class="num">07</span><h2>异常与边界</h2></div>
+  <p class="lead-p">以下场景在 Demo 中必须可通过交互复现或至少在文档中给出明确行为，不能留给开发临场决定。</p>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>场景</th><th>系统行为</th><th>用户可做什么</th></tr></thead>
+      <tbody>
+        <tr><td>无网络 / 请求超时</td><td>不生成记录，提示「打卡未成功，请重试」</td><td>重试；确认记录区无新增后再离开</td></tr>
+        <tr><td>重复点击打卡</td><td>30 秒幂等，只保留一条</td><td>刷新查看今日记录</td></tr>
+        <tr><td>未到打卡时间 / 已过窗口</td><td>按钮置灰并说明原因</td><td>等待窗口开放或联系 HR</td></tr>
+        <tr><td>定位权限拒绝 / 精度不足</td><td>拒绝定位打卡，不提供跳过</td><td>改用扫码、人脸或网页</td></tr>
+        <tr><td>范围外打卡</td><td>拒绝并显示最近办公点距离</td><td>提交外勤 / 出差申请，获批后打卡</td></tr>
+        <tr><td>二维码过期 / 非本点</td><td>拒绝并提示刷新</td><td>刷新后重扫，或改用其他方式</td></tr>
+        <tr><td>人脸连续失败 3 次</td><td>当日转人工审核，禁用重试</td><td>联系 HR 确认后补卡</td></tr>
+        <tr><td>跨零点打卡</td><td>00:00 后的卡记次日，前一日下班缺卡</td><td>发起补下班卡申诉</td></tr>
+        <tr><td>请假与出差时段重叠</td><td>拒绝提交并列出重叠日期</td><td>调整时段或撤销其一</td></tr>
+        <tr><td>补卡次数用尽</td><td>禁止提交</td><td>联系 HR 走手工修正</td></tr>
+        <tr><td>审批人离职 / 缺位</td><td>待办自动转交 HR</td><td>申请人无需重新提交</td></tr>
+        <tr><td>审批时申请已被撤回</td><td>提示「已撤回」并刷新列表</td><td>返回列表继续处理</td></tr>
+        <tr><td>月报已锁定后发现问题</td><td>禁止申诉与修正</td><td>联系 HR 解锁并重算</td></tr>
+        <tr><td>报表生成失败</td><td>通知 HR，保留上一版本</td><td>手动重新生成</td></tr>
+        <tr><td>审计写入失败</td><td>阻断业务操作</td><td>重试；联系系统维护人员</td></tr>
+      </tbody>
+    </table>
+  </div>
+</section>
+
+<section id="s8">
+  <div class="sec-head"><span class="num">08</span><h2>Demo 说明与待确认问题</h2></div>
+
+  <h3>8.1 Demo 覆盖清单</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>Demo</th><th>覆盖需求</th><th>可验证的关键行为</th></tr></thead>
+      <tbody>
+        <tr><td><b>Demo 1</b> 员工打卡</td><td>FR-02 ~ FR-06</td><td>四种方式切换；范围外拒绝；二维码过期；人脸失败 3 次转人工；今日状态与迟到展示</td></tr>
+        <tr><td><b>Demo 2</b> 我的考勤</td><td>FR-07、FR-08</td><td>异常筛选；申诉表单必填与字数校验；提交后状态变为「申诉中」</td></tr>
+        <tr><td><b>Demo 3</b> 审批中心</td><td>FR-09 ~ FR-12</td><td>通过 / 驳回；驳回必填理由；待办数量变化；冲突提示</td></tr>
+        <tr><td><b>Demo 4</b> 规则配置</td><td>FR-13、FR-14</td><td>时间与范围校验；至少一种打卡方式；保存后追加审计</td></tr>
+        <tr><td><b>Demo 5</b> 看板与月报</td><td>FR-15、FR-16</td><td>日报指标；月报未结提示；锁定 / 解锁；导出模拟</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>8.2 演示账号与数据</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>角色</th><th>演示账号</th><th>可见范围</th><th>演示用途</th></tr></thead>
+      <tbody>
+        <tr><td>员工</td><td>陈璐 · 研发部</td><td>本人打卡与考勤</td><td>Demo 1、Demo 2</td></tr>
+        <tr><td>直属主管</td><td>林晓 · 研发部</td><td>本人 + 研发部下属</td><td>Demo 3</td></tr>
+        <tr><td>HR 考勤管理员</td><td>王敏 · 人力行政部</td><td>全公司</td><td>Demo 4、Demo 5</td></tr>
+      </tbody>
+    </table>
+  </div>
+  <p>所有姓名、日期、考勤数据为构造数据。Demo 采用 2026 年 11 月 9 日（周一）作为业务日期，便于展示完整工作日；页面顶部固定显示「演示数据」。</p>
+
+  <h3>8.3 待确认问题</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>编号</th><th>问题</th><th>影响</th><th>当前假设</th><th>决策方</th></tr></thead>
+      <tbody>
+        <tr><td>Q1</td><td>迟到、旷工是否与薪酬扣减联动？</td><td>决定月报字段与是否需要导出金额</td><td>本期只统计，不计算金额</td><td>HR / 财务</td></tr>
+        <tr><td>Q2</td><td>人脸信息的存储期限、告知与撤回流程如何落地？</td><td>合规与员工信任；影响录入流程</td><td>单独同意，撤回后 30 日删除</td><td>法务 / HR</td></tr>
+        <tr><td>Q3</td><td>弹性打卡与午休时长是否计入工时？</td><td>影响迟到/早退与工时展示</td><td>弹性不影响工时；午休扣除</td><td>HR</td></tr>
+        <tr><td>Q4</td><td>外勤打卡是否必须事前审批？</td><td>影响范围外打卡的放行规则</td><td>必须已有通过的审批</td><td>业务负责人</td></tr>
+        <tr><td>Q5</td><td>每月补卡次数上限是多少？</td><td>影响申诉入口与月报口径</td><td>默认 3 次，可按考勤组配置</td><td>HR</td></tr>
+        <tr><td>Q6</td><td>是否需要同步企业微信 / 飞书组织架构？</td><td>影响账号与部门维护成本</td><td>本期手动维护，预留同步</td><td>IT / HR</td></tr>
+        <tr><td>Q7</td><td>月报锁定后是否仍允许当月申诉？</td><td>影响锁定时点与重算频率</td><td>锁定后不允许，需 HR 解锁</td><td>HR</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <h3>8.4 版本记录</h3>
+  <div class="table-wrap">
+    <table>
+      <thead><tr><th>版本</th><th>日期</th><th>变更</th></tr></thead>
+      <tbody>
+        <tr><td>v1.0</td><td>2026-11-07</td><td>首版：打卡四方式、异常申诉、请假/加班/出差审批、规则配置、看板与月报、通知与审计</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>
+    <b>百人企业考勤系统 Demo · 产品需求文档</b> · v1.0 · 2026-11-07<br>
+    本文件定义产品行为与业务规则，不包含技术架构、接口或数据库设计。标注为 Assumption / TBD 的内容需在开发前确认；未标注内容视为本期需求。
+  </footer>
+</section>
+
+  <div class="modal-mask" id="appealModal">
+    <div class="modal">
+      <h4>提交申诉 / 补卡</h4>
+      <div class="sub" id="appealSub">日期 11-05 · 总部标准班</div>
+      <div class="field">
+        <label>类型</label>
+        <select id="appealType">
+          <option>补上班卡</option>
+          <option>补下班卡</option>
+          <option>迟到申诉</option>
+          <option>早退申诉</option>
+          <option>旷工申诉</option>
+          <option>外勤补录</option>
+        </select>
+      </div>
+      <div class="field"><label>补卡时间（补卡类型填写）</label><input id="appealTime" type="time" value="09:00"></div>
+      <div class="field"><label>原因（10–200 字）</label><textarea id="appealReason" placeholder="请说明具体情况，例如：上午在客户现场开会，未到公司打卡。"></textarea></div>
+      <div class="field"><label>凭证（可选，Demo 不上传）</label><input id="appealFile" type="file"></div>
+      <div class="modal-foot">
+        <button class="btn ghost" type="button" data-close>取消</button>
+        <button class="btn" type="button" id="appealSubmit">提交申诉</button>
+      </div>
+    </div>
+  </div>
+
+  <div class="modal-mask" id="rejectModal">
+    <div class="modal">
+      <h4>驳回申请</h4>
+      <div class="sub" id="rejectSub">请填写驳回理由，理由将回传给申请人</div>
+      <div class="field"><label>驳回理由（至少 5 个字）</label><textarea id="rejectReason" placeholder="例如：补卡时间与当日下班卡间隔异常，请补充客户现场证明。"></textarea></div>
+      <div class="modal-foot">
+        <button class="btn ghost" type="button" data-close>取消</button>
+        <button class="btn danger" type="button" id="rejectSubmit">确认驳回</button>
+      </div>
+    </div>
+  </div>
+
+  <div id="toast"></div>
+</div>
+</main>
+
+<script>
+(function(){
+  'use strict';
+  var $ = function(s, el){ return (el || document).querySelector(s); };
+  var $$ = function(s, el){ return Array.prototype.slice.call((el || document).querySelectorAll(s)); };
+
+  /* ---------- toast / modal ---------- */
+  var toastTimer = null;
+  function toast(msg, type){
+    var t = document.getElementById('toast');
+    t.textContent = msg;
+    t.className = 'show' + (type === 'err' ? ' err' : '');
+    clearTimeout(toastTimer);
+    toastTimer = setTimeout(function(){ t.className = ''; }, 2800);
+  }
+  function openModal(id){ document.getElementById(id).classList.add('open'); }
+  function closeModal(el){ el.classList.remove('open'); }
+  $$('[data-close]').forEach(function(el){
+    el.addEventListener('click', function(){ var m = el.closest('.modal-mask'); if(m) closeModal(m); });
+  });
+  $$('.modal-mask').forEach(function(m){
+    m.addEventListener('click', function(e){ if(e.target === m) closeModal(m); });
+  });
+  document.addEventListener('keydown', function(e){
+    if(e.key === 'Escape'){ $$('.modal-mask.open').forEach(function(m){ closeModal(m); }); }
+  });
+
+  /* ---------- tabs ---------- */
+  $$('.tabs').forEach(function(tabs){
+    var body = tabs.nextElementSibling;
+    tabs.addEventListener('click', function(e){
+      var btn = e.target.closest('.tab');
+      if(!btn) return;
+      $$('.tab', tabs).forEach(function(b){ b.classList.toggle('active', b === btn); });
+      if(body){ $$('.panel', body).forEach(function(p){ p.classList.toggle('active', p.dataset.panel === btn.dataset.tab); }); }
+    });
+  });
+
+  /* ---------- reading progress + scrollspy ---------- */
+  var bar = document.getElementById('progressBar');
+  function onScroll(){
+    var h = document.documentElement.scrollHeight - window.innerHeight;
+    bar.style.width = (h > 0 ? (window.scrollY / h) * 100 : 0) + '%';
+  }
+  window.addEventListener('scroll', onScroll, { passive: true });
+  onScroll();
+
+  var navLinks = $$('.nav a');
+  if('IntersectionObserver' in window){
+    var spy = new IntersectionObserver(function(entries){
+      entries.forEach(function(en){
+        if(en.isIntersecting){
+          navLinks.forEach(function(a){ a.classList.toggle('active', a.getAttribute('href') === '#' + en.target.id); });
+        }
+      });
+    }, { rootMargin: '-8% 0px -82% 0px' });
+    $$('main section[id]').forEach(function(s){ spy.observe(s); });
+  }
+
+  /* ---------- Demo 1: punch ---------- */
+  var punch = { in: null, out: null };
+  function renderPunch(){
+    $('#punchInTime').textContent = punch.in ? punch.in.t : '--:--';
+    $('#punchInWay').textContent = punch.in ? punch.in.way : '—';
+    $('#punchOutTime').textContent = punch.out ? punch.out.t : '--:--';
+    $('#punchOutWay').textContent = punch.out ? punch.out.way : '—';
+    var st = $('#punchStatus');
+    if(!punch.in){ st.textContent = '未打卡'; }
+    else if(!punch.out){ st.textContent = '已上班 · 迟到 12 分钟'; }
+    else { st.textContent = '今日已完成 · 迟到 12 分钟'; }
+  }
+  function addPunch(way){
+    if(punch.in && punch.out){ toast('今日上下班打卡均已完成'); return false; }
+    var isOut = !!punch.in;
+    if(!punch.in){ punch.in = { t: '09:12', way: way }; }
+    else { punch.out = { t: '18:05', way: way }; }
+    renderPunch();
+    toast(isOut ? '下班打卡成功 · 18:05' : '上班打卡成功 · 09:12');
+    return true;
+  }
+
+  $('#locBtn').addEventListener('click', function(){
+    if(punch.in && punch.out){ toast('今日上下班打卡均已完成'); return; }
+    var sel = $('#locSelect');
+    var opt = sel.options[sel.selectedIndex];
+    var dist = parseInt(opt.getAttribute('data-dist'), 10);
+    var place = opt.value;
+    var msg = $('#locMsg');
+    if(dist > 200 && !$('#locOutsideApprove').checked){
+      msg.className = 'msg err';
+      msg.textContent = '打卡失败：距最近办公点约 ' + dist + ' 米，超出 200 米围栏。可改用扫码 / 人脸 / 网页，或先申请外勤 / 出差。';
+      return;
+    }
+    var isOut = !!punch.in;
+    if(!addPunch('定位')) return;
+    msg.className = 'msg ok';
+    msg.textContent = dist > 200
+      ? (isOut ? '下班' : '上班') + '打卡成功 · ' + place + ' · 外勤（已关联审批）'
+      : (isOut ? '下班' : '上班') + '打卡成功 · ' + place + ' · 距办公点 ' + dist + ' 米';
+  });
+
+  var qrLeft = 60, qrTimer = null;
+  function drawQR(){
+    var grid = document.getElementById('qrGrid');
+    grid.innerHTML = '';
+    function cell(r, c){
+      var zones = [[0, 0], [0, 14], [14, 0]];
+      for(var z = 0; z < zones.length; z++){
+        var fr = zones[z][0], fc = zones[z][1];
+        if(r >= fr && r < fr + 7 && c >= fc && c < fc + 7){
+          var rr = r - fr, cc = c - fc;
+          if(rr === 0 || rr === 6 || cc === 0 || cc === 6) return 1;
+          if(rr >= 2 && rr <= 4 && cc >= 2 && cc <= 4) return 1;
+          return 0;
+        }
+      }
+      return ((r * 7 + c * 11 + r * c * 3) % 13 < 6) ? 1 : 0;
+    }
+    for(var r = 0; r < 21; r++){
+      for(var c = 0; c < 21; c++){
+        var i = document.createElement('i');
+        if(cell(r, c)) i.className = 'd';
+        grid.appendChild(i);
+      }
+    }
+  }
+  function tickQR(){
+    qrLeft--;
+    if(qrLeft <= 0){
+      qrLeft = 0;
+      $('#qrCount').textContent = '已过期';
+      $('#qrBtn').disabled = true;
+      if(qrTimer){ clearInterval(qrTimer); qrTimer = null; }
+      return;
+    }
+    $('#qrCount').textContent = qrLeft + 's';
+  }
+  function startQR(){
+    qrLeft = 60;
+    $('#qrCount').textContent = '60s';
+    $('#qrBtn').disabled = false;
+    drawQR();
+    if(qrTimer) clearInterval(qrTimer);
+    qrTimer = setInterval(tickQR, 1000);
+  }
+  startQR();
+  $('#qrRefresh').addEventListener('click', function(){ startQR(); $('#qrMsg').textContent = ''; toast('二维码已刷新'); });
+  $('#qrBtn').addEventListener('click', function(){
+    if(punch.in && punch.out){ toast('今日上下班打卡均已完成'); return; }
+    var msg = $('#qrMsg');
+    if(qrLeft <= 0){ msg.className = 'msg err'; msg.textContent = '打卡失败：二维码已过期，请刷新后重新扫描。'; return; }
+    if($('#qrWrong').checked){
+      msg.className = 'msg err';
+      msg.textContent = '打卡失败：该二维码属于其他办公点，请使用本办公点屏幕上的动态码。';
+      return;
+    }
+    var isOut = !!punch.in;
+    if(!addPunch('扫码')) return;
+    msg.className = 'msg ok';
+    msg.textContent = (isOut ? '下班' : '上班') + '打卡成功 · 总部前台大屏 · 动态码校验通过';
+  });
+
+  var faceFails = 0, scanning = false;
+  $('#faceBtn').addEventListener('click', function(){
+    if(punch.in && punch.out){ toast('今日上下班打卡均已完成'); return; }
+    if(scanning) return;
+    var btn = $('#faceBtn'), ring = $('#faceRing'), msg = $('#faceMsg');
+    if(faceFails >= 3){ msg.className = 'msg err'; msg.textContent = '今日人脸尝试已达 3 次，已转人工审核，请联系 HR。'; return; }
+    scanning = true;
+    btn.disabled = true;
+    btn.textContent = '识别中…';
+    ring.classList.add('scanning');
+    ring.classList.remove('done');
+    msg.className = 'msg info';
+    msg.textContent = '正在进行活体检测与 1:1 比对…';
+    setTimeout(function(){
+      scanning = false;
+      ring.classList.remove('scanning');
+      btn.disabled = false;
+      btn.textContent = '开始识别';
+      if($('#faceFail').checked){
+        faceFails++;
+        if(faceFails >= 3){
+          btn.disabled = true;
+          btn.textContent = '已转人工审核';
+          msg.className = 'msg err';
+          msg.textContent = '连续 3 次识别失败，今日已转 HR 人工审核，请勿重复尝试。';
+        } else {
+          msg.className = 'msg err';
+          msg.textContent = '识别失败（第 ' + faceFails + ' 次），请调整光线后重试。失败 3 次将转人工。';
+        }
+        return;
+      }
+      var isOut = !!punch.in;
+      ring.classList.add('done');
+      if(!addPunch('人脸识别')) return;
+      msg.className = 'msg ok';
+      msg.textContent = (isOut ? '下班' : '上班') + '打卡成功 · 人脸比对通过（92 分）';
+    }, 1500);
+  });
+
+  $('#webBtn').addEventListener('click', function(){
+    if(punch.in && punch.out){ toast('今日上下班打卡均已完成'); return; }
+    var needConfirm = $('#webConfirm').checked;
+    var isOut = !!punch.in;
+    if(!addPunch('网页')) return;
+    var msg = $('#webMsg');
+    msg.className = 'msg ok';
+    msg.textContent = needConfirm
+      ? (isOut ? '下班' : '上班') + '打卡已记录 · 待主管确认'
+      : (isOut ? '下班' : '上班') + '打卡成功 · 10.12.8.21 · 已记录设备信息';
+  });
+
+  $('#punchReset').addEventListener('click', function(){
+    punch.in = null; punch.out = null;
+    renderPunch();
+    ['locMsg', 'qrMsg', 'faceMsg', 'webMsg'].forEach(function(id){ document.getElementById(id).textContent = ''; });
+    $('#locOutsideApprove').checked = false;
+    $('#qrWrong').checked = false;
+    $('#faceFail').checked = false;
+    $('#webConfirm').checked = false;
+    faceFails = 0;
+    var fb = $('#faceBtn');
+    fb.disabled = false;
+    fb.textContent = '开始识别';
+    $('#faceRing').classList.remove('done', 'scanning');
+    startQR();
+    toast('打卡演示已重置');
+  });
+
+  /* ---------- Demo 2: attendance + appeal ---------- */
+  var appealRow = null;
+  function bindAttendance(){
+    $$('.appeal-btn').forEach(function(btn){
+      btn.onclick = function(){
+        appealRow = btn.closest('tr');
+        $('#appealSub').textContent = '日期 ' + btn.getAttribute('data-date') + ' · 总部标准班 · 本月剩余补卡 2 次';
+        $('#appealType').value = btn.getAttribute('data-type');
+        $('#appealReason').value = '';
+        openModal('appealModal');
+      };
+    });
+    $$('[data-view="detail"]').forEach(function(btn){
+      btn.onclick = function(){ toast('Demo：日详情包含打卡方式、地点、关联审批与修正记录'); };
+    });
+  }
+  bindAttendance();
+
+  $$('.filter-btn').forEach(function(btn){
+    btn.addEventListener('click', function(){
+      $$('.filter-btn').forEach(function(b){ b.classList.toggle('active', b === btn); });
+      var f = btn.getAttribute('data-filter');
+      $$('#attRows tr').forEach(function(tr){
+        var st = tr.getAttribute('data-status');
+        var show = f === 'all' || (f === 'abnormal' && st === 'abnormal') || (f === 'pending' && st === 'pending');
+        tr.classList.toggle('hide', !show);
+      });
+    });
+  });
+
+  $('#appealSubmit').addEventListener('click', function(){
+    var reason = $('#appealReason').value.trim();
+    if(reason.length < 10){ toast('请填写至少 10 个字的原因', 'err'); return; }
+    if(!appealRow) return;
+    appealRow.setAttribute('data-status', 'pending');
+    var cells = appealRow.children;
+    cells[3].innerHTML = '<span class="chip blue">申诉中</span>';
+    cells[4].innerHTML = '<span class="chip gray">已提交</span>';
+    closeModal($('#appealModal'));
+    toast('申诉已提交，等待直属主管审批');
+    appealRow = null;
+  });
+
+  var attInitial = $('#attRows').innerHTML;
+  $('#attReset').addEventListener('click', function(){
+    $('#attRows').innerHTML = attInitial;
+    bindAttendance();
+    $$('.filter-btn').forEach(function(b, i){ b.classList.toggle('active', i === 0); });
+    toast('考勤记录演示已重置');
+  });
+
+  /* ---------- Demo 3: approvals ---------- */
+  var rejectCard = null;
+  function updateApprCount(){
+    var n = $$('#apprList .appr-card').length;
+    $('#apprCount').textContent = n;
+    $('#apprEmpty').style.display = n === 0 ? 'block' : 'none';
+  }
+  function finishApproval(card, name, type, result){
+    card.remove();
+    var done = document.createElement('div');
+    done.className = 'done-item';
+    done.innerHTML = '<span>' + name + ' · ' + type + '</span><span class="chip ' + (result === '已通过' ? 'green' : 'red') + '">' + result + '</span>';
+    $('#doneList').prepend(done);
+    $('#doneEmpty').style.display = 'none';
+    updateApprCount();
+    toast(result === '已通过' ? '已通过并通知申请人' : '已驳回并通知申请人');
+  }
+  function bindApproval(){
+    $$('#apprList .approve-btn').forEach(function(btn){
+      btn.onclick = function(){
+        var card = btn.closest('.appr-card');
+        finishApproval(card, $('.appr-name', card).textContent, card.getAttribute('data-type'), '已通过');
+      };
+    });
+    $$('#apprList .reject-btn').forEach(function(btn){
+      btn.onclick = function(){
+        rejectCard = btn.closest('.appr-card');
+        $('#rejectSub').textContent = $('.appr-name', rejectCard).textContent + ' · ' + rejectCard.getAttribute('data-type');
+        $('#rejectReason').value = '';
+        openModal('rejectModal');
+      };
+    });
+  }
+  bindApproval();
+  updateApprCount();
+
+  $('#rejectSubmit').addEventListener('click', function(){
+    var r = $('#rejectReason').value.trim();
+    if(r.length < 5){ toast('驳回理由至少 5 个字', 'err'); return; }
+    if(!rejectCard) return;
+    var name = $('.appr-name', rejectCard).textContent;
+    var type = rejectCard.getAttribute('data-type');
+    closeModal($('#rejectModal'));
+    finishApproval(rejectCard, name, type, '已驳回');
+    rejectCard = null;
+  });
+
+  var apprInitial = $('#apprList').innerHTML;
+  $('#apprReset').addEventListener('click', function(){
+    $('#apprList').innerHTML = apprInitial;
+    $('#doneList').innerHTML = '';
+    $('#doneEmpty').style.display = 'block';
+    bindApproval();
+    updateApprCount();
+    toast('审批演示已重置');
+  });
+
+  /* ---------- Demo 4: rules ---------- */
+  function ruleMsg(text, ok){
+    var m = $('#ruleMsg');
+    m.className = 'msg ' + (ok ? 'ok' : 'err');
+    m.textContent = text;
+  }
+  $('#ruleSave').addEventListener('click', function(){
+    var name = $('#ruleName').value.trim();
+    var start = $('#shiftStart').value;
+    var end = $('#shiftEnd').value;
+    var flex = parseInt($('#flexMin').value, 10);
+    var radius = parseInt($('#radius').value, 10);
+    var limit = parseInt($('#makeupLimit').value, 10);
+    var methods = ['methodLoc', 'methodQr', 'methodFace', 'methodWeb'].filter(function(id){
+      return document.getElementById(id).checked;
+    });
+    if(!name){ ruleMsg('请填写考勤组名称'); return; }
+    if(!start || !end){ ruleMsg('请填写完整的上下班时间'); return; }
+    if(end <= start){ ruleMsg('下班时间必须晚于上班时间'); return; }
+    if(isNaN(flex) || flex < 0 || flex > 60){ ruleMsg('弹性分钟需在 0–60 之间'); return; }
+    if(isNaN(radius) || radius < 100 || radius > 1000){ ruleMsg('定位半径需在 100–1000 米之间'); return; }
+    if(isNaN(limit) || limit < 0 || limit > 10){ ruleMsg('补卡上限需在 0–10 次之间'); return; }
+    if(methods.length === 0){ ruleMsg('至少选择一种打卡方式'); return; }
+    if(methods.length === 1 && methods[0] === 'methodFace'){ ruleMsg('人脸不能作为唯一打卡方式，请至少再选一种'); return; }
+    var eff = $('#effectiveDate').value;
+    ruleMsg('已保存 · 新规则将于 ' + eff + ' 00:00 生效', true);
+    var li = document.createElement('li');
+    li.textContent = '11-07 10:24 · HR 王敏 · 保存考勤组「' + name + '」新版本 · 生效 ' + eff + ' · 原因：Demo 演示';
+    $('#auditList').prepend(li);
+    toast('规则已保存，按生效日期应用');
+  });
+  $('#ruleCancel').addEventListener('click', function(){ toast('已取消，未保存任何变更'); });
+  $('#ruleReset').addEventListener('click', function(){
+    $('#ruleName').value = '总部标准班';
+    $('#shiftStart').value = '09:00';
+    $('#shiftEnd').value = '18:00';
+    $('#flexMin').value = '0';
+    $('#makeupLimit').value = '3';
+    $('#radius').value = '200';
+    ['methodLoc', 'methodQr', 'methodFace', 'methodWeb'].forEach(function(id){ document.getElementById(id).checked = true; });
+    $('#effectiveDate').value = '2026-11-10';
+    $('#ruleMsg').textContent = '';
+    toast('规则表单已重置');
+  });
+
+  /* ---------- Demo 5: admin ---------- */
+  var locked = false;
+  $('#lockBtn').addEventListener('click', function(){
+    var status = $('#reportStatus'), msg = $('#lockMsg');
+    if(!locked){
+      locked = true;
+      status.textContent = '已锁定 · v3';
+      status.className = 'chip green';
+      $('#lockBtn').textContent = '解锁月报';
+      msg.className = 'msg ok';
+      msg.textContent = '已锁定。2 条未结异常按 Demo 规则标记为 HR 豁免，任何修改需先解锁。';
+      toast('月报已锁定，修改需先解锁');
+    } else {
+      locked = false;
+      status.textContent = '已生成 · 未锁定';
+      status.className = 'chip amber';
+      $('#lockBtn').textContent = '锁定月报';
+      msg.className = 'msg info';
+      msg.textContent = '已解锁，可重新处理未结异常；再次锁定将生成新版本。';
+      toast('月报已解锁');
+    }
+  });
+  $('#exportDaily').addEventListener('click', function(){ toast('Demo：已生成当日快照 CSV（模拟下载）'); });
+  $('#exportMonthly').addEventListener('click', function(){ toast('Demo：已生成 2026-11 月报 CSV（模拟下载）'); });
+  $('#adminReset').addEventListener('click', function(){
+    locked = false;
+    $('#reportStatus').textContent = '已生成 · 未锁定';
+    $('#reportStatus').className = 'chip amber';
+    $('#lockBtn').textContent = '锁定月报';
+    $('#lockMsg').className = 'msg info';
+    $('#lockMsg').textContent = '锁定前需处理 2 条未结异常，或由 HR 确认豁免。';
+    toast('看板演示已重置');
+  });
+})();
+</script>
+</body>
+</html>
